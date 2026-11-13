@@ -1,0 +1,23 @@
+{
+  "name": "@dharmaraksha/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/index.js",
+    "dev": "tsc -w",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@dharmaraksha/shared-contracts": "*",
+    "@dharmaraksha/tribunal-definitions": "*",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "typescript": "^5.4.5"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "dharmaraksha",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DHARMARAKSHA — Indian legal-document assistance system with 3D Tribunal Chamber and kiosk gateway",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present",
+    "dev:laptop": "npm run dev --workspace=@dharmaraksha/laptop-web",
+    "dev:phone": "npm run dev --workspace=@dharmaraksha/phone-web",
+    "dev:api": "npm run dev --workspace=@dharmaraksha/main-api",
+    "dev:worker": "npm run dev --workspace=@dharmaraksha/worker",
+    "dev:gateway": "npm run dev --workspace=@dharmaraksha/uno-gateway"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "rimraf": "^5.0.7",
+    "typescript": "^5.4.5"
+  }
+}
+
