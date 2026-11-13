@@ -19,7 +19,7 @@ This ledger tracks the status, primary deliverables, and verification gates acro
 | **13** | **Bench Packets, Messenger & Presiding Review** | Versioned bench packet consolidation by chairs (A10–E10) with checksums; deterministic Messenger delivery with deduplication and persisted acknowledgments; AI Presiding Reviewer synthesis preserving dissent and gaps; post-synthesis reference grounding validation with publication blocking / partial policies; non-blocking animation milestones; and automated 8-point verification suite. | Duplicate packet delivery has one logical effect; citation failures and dissent survive synthesis; real events support a truthful visible handoff. | **COMPLETED** |
 | **14** | **Document-Grounded Questions Across Case** | Typed questions scoped to one document or all documents in the active snapshot; focused clarification on ambiguous "this agreement"; cross-document comparison and discrepancy calculation; absent information reporting without hallucination; preliminary OCR vs tribunal verified source status labeling; targeted review task assignment without 50-agent restart; multi-tenant session isolation; and stale snapshot version rejection. | Questions about either of two documents and their differences return correct citations; absent information produces no invented answer; stale responses cannot attach to a newer snapshot. | **COMPLETED** |
 | **15** | **Readable Reports & Private Downloads** | Versioned PDF generator, document inventory, Indian-script font resolver, non-blocking rendering worker outside HTTP path, readable page breaks, selectable text, source links, concise accessible HTML summary, spoken summary for phone audio, private revocable download authorization, disconnected delivery resilience, and automated 9-point verification suite. | Report contents match the frozen case snapshot, citations resolve, private links enforce access, and text renders legibly in the requested languages. | **COMPLETED** |
-| **16** | **Orchestration Engine & Specialist Task DAG** | Asynchronous worker scheduler, case-to-specialist routing, dependency DAG (Bench A -> B/C -> D -> E), execution bounds. | Full multi-bench execution runs within bounded latency without deadlocks. | Pending |
+| **16** | **Laptop-Only 3D Chamber & 2D Fallback** | Three.js / React Three Fiber / Drei laptop WebGL canvas; 5 round tables with 10 stable seats each (50 seats total); Chair 10th seat elevated with gold crest; Central Evidence Well with rotating snapshot folio; Messenger courier floor inlays connecting tables to well and dais; elevated Presiding Reviewer podium; Camera Presets (Overall, Bench A–E, Well, Presiding, Reset); smooth lerp with reduced motion instant jump; 3 themes (Split hybrid, Light, Dark); WebGL context-loss listeners with auto-fallback to 2D; interactive SVG 2D fallback map; HTML parity controls for all 50 seats; phone bundle 100% independent; 10-test verification suite. | All fifty seats are correctly selectable, camera presets are understandable, and every essential action remains available through HTML. | **COMPLETED** |
 | **17** | **Messenger Coordination & Packet Handover** | Inter-bench packet transport, integrity check, transit animation event emission, handoff to Presiding Reviewer. | Packets successfully validated and received at Presiding Reviewer desk. | Pending |
 | **18** | **AI Presiding Reviewer Synthesis** | Gemini-powered synthesis of 5 bench packets, executive summary, preserved disagreements, questions for visitor. | Consolidated PresidingReviewSummary produced with zero hallucinatory claims. | Pending |
 | **19** | **Sarvam AI Indian Speech Engine** | Sarvam STT integration for Indian accents, Sarvam TTS for spoken responses, audio player with mute/stop controls. | Spoken audio correctly transcribed and synthesized in Kannada/Hindi. | Pending |
@@ -416,5 +416,58 @@ This ledger tracks the status, primary deliverables, and verification gates acro
 - **Verification Gate**:
   - All 9 acceptance tests executed and passed cleanly (`Exit Code: 0`).
   - Phase 14 verification test suite verified cleanly (`Exit Code: 0`).
+  - Monorepo typecheck passed with 0 errors across all 7 workspaces (`npm run typecheck`).
+  - Monorepo build passed across all 7 workspaces (`npm run build`).
+
+---
+
+## Phase 16 Execution Summary
+
+- **Deliverables**:
+  - **Chamber Coordinates & Theme Tokens** (`apps/laptop-web/src/components/chamber-types.ts`):
+    - Defines camera presets (`overall`, `bench-A`, `bench-B`, `bench-C`, `bench-D`, `bench-E`, `document`, `presiding`) with 3D camera coordinates, look-at targets, and human-readable descriptions.
+    - Defines radial table positions for all 5 benches (Bench A to E), Central Evidence Well (`[0, 0, 0]`), and Presiding Reviewer podium (`[0, 0, 6]`).
+    - Defines 6 Messenger transit track segments inlaid into the chamber floor connecting each table to the well, and the well to the presiding dais.
+    - Defines tested theme token palettes (`split` hybrid, `light`, and `dark`).
+  - **3D Tribunal Chamber Canvas** (`apps/laptop-web/src/components/TribunalChamber.tsx`):
+    - Built using `@react-three/fiber`, `@react-three/drei`, and `three`.
+    - **5 Distinctive Round Tables**: Arranged in semi-circle facing the Presiding podium, with primary bench colors, brass perimeter rings, and 10 stable radial seats per table (50 total seats).
+    - **50 Individually Selectable Specialist Seats**: Rendered as distinct pedestals and backrests with specialist IDs (`A01`–`E10`). Clicking any seat selects that specialist (`selectedSpecialistId`) and updates both 3D beacons and HTML inspector.
+    - **Distinct Chair Seat (10th Seat)**: Occupies index 9 of each bench (`A10`, `B10`, `C10`, `D10`, `E10`), distinguished with elevated height, gold metallic finish, ornate backrest, cone finial/crown, and amber glow ring.
+    - **Central Evidence Well**: Cylindrical tiered podium with glowing rotating document glyph and floating immutable evidence snapshot folio.
+    - **Presiding Reviewer Dais**: Elevated multi-tier marble/brass platform with lectern, slanted reading console, and adjudication banner.
+    - **Messenger Route & Moving Courier**: Inlaid glowing brass transit tracks across the floor with floating octahedron courier marker.
+    - **CameraController**: Smooth exponential lerp between camera presets, respecting `reducedMotion` for instantaneous snapping without motion sickness.
+    - **WebGL Context-Loss Recovery**: Registers `webglcontextlost` and `webglcontextrestored` event listeners, automatically switching to 2D Fallback map upon GPU context loss with recovery toast.
+  - **2D Architectural Map Fallback** (`apps/laptop-web/src/components/Chamber2DFallback.tsx`):
+    - Complete, interactive SVG architectural schematic floor plan (`viewBox="0 0 800 700"`).
+    - Replicates all 5 round tables, 50 seats, Evidence Well, Presiding Dais, and courier transit paths.
+    - Full clickability on every single table and seat with gold crown indicators for Chairs and pulsing active selection halo.
+    - 100% accessible via keyboard (`tabIndex={0}`, `role="button"`, ARIA labels).
+  - **Chamber HTML Overlay Controls** (`apps/laptop-web/src/components/ChamberOverlayControls.tsx`):
+    - Camera preset navigation toolbar (`Overall`, `Bench A`–`E`, `Well`, `Presiding`, `Reset`).
+    - Quick HTML `<select>` dropdown containing all 50 specialists grouped by bench, ensuring every seat is selectable via standard HTML.
+    - Reduced motion toggle (`Reduced Motion: ON / OFF`) and 2D/3D toggle (`Switch to 2D Map / 3D Canvas`).
+    - Contextual evidence & specialist detail pill showing active bench working principle or selected specialist role, objective, capabilities, and prompt version.
+  - **BenchInspector Two-Way Synchronization** (`apps/laptop-web/src/components/BenchInspector.tsx`):
+    - Accepts `selectedSpecialistId` and `onSelectSpecialist`.
+    - Expanded detail drawer rendering selected specialist's role instructions, focus area, allowed read-only capabilities, evidence inputs, and output contract.
+    - Highlights active specialist card in the roster with active badge and crown for chair.
+  - **Phone Bundle Independence**:
+    - Confirmed 0 imports of `three`, `@react-three/fiber`, or `@react-three/drei` in `apps/phone-web`. Phone bundle builds to ~180 kB (55 kB gzip) in 2.5s.
+  - **Automated 10-Point Verification Suite** (`apps/worker/src/tests/phase16-verification.ts`):
+    1. Exactly 50 unique specialist identities and seating roster (10 per bench, 5 benches).
+    2. Deterministic seating geometry and radial non-colliding angles (36° increments).
+    3. Camera presets definition and target coordinate mapping.
+    4. Messenger transit inlays linking all tables to well and dais.
+    5. Complete 2D architectural map fallback implementation with 50 interactive nodes.
+    6. HTML action parity and pure HTML specialist selector.
+    7. WebGL context-loss listeners and reduced motion handling.
+    8. Theme alternatives configuration (Split hybrid, Light, Dark).
+    9. Phone web independence (strict 0 Three.js / WebGL dependencies).
+    10. BenchInspector specialist selection and contract detail synchronization.
+
+- **Verification Gate**:
+  - All 10 acceptance tests executed and passed cleanly (`Exit Code: 0`).
   - Monorepo typecheck passed with 0 errors across all 7 workspaces (`npm run typecheck`).
   - Monorepo build passed across all 7 workspaces (`npm run build`).

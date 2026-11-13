@@ -10,6 +10,8 @@
     "start": "node dist/index.js",
     "test:phase12": "node dist/tests/phase12-verification.js",
     "test:phase13": "node dist/tests/phase13-verification.js",
+    "test:phase15": "node dist/tests/phase15-verification.js",
+    "test:phase16": "node dist/tests/phase16-verification.js",
     "dev": "tsc -w",
     "clean": "rimraf dist"
   },

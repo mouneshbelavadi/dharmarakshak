@@ -8,6 +8,7 @@ import { ConnectionsView } from './components/ConnectionsView.js';
 import { DeviceManagementView } from './components/DeviceManagementView.js';
 import { BenchInspector } from './components/BenchInspector.js';
 import { CaseRecord, LaptopTheme, UserRole } from '@dharmaraksha/shared-contracts';
+import { BenchId } from '@dharmaraksha/tribunal-definitions';
 import './styles/theme.css';
 
 const sampleCase: CaseRecord = {
@@ -67,7 +68,8 @@ export function App() {
   const [userRole, setUserRole] = useState<UserRole>('visitor');
   const [isPresentationMode, setIsPresentationMode] = useState<boolean>(true);
   const [isFixture, setIsFixture] = useState<boolean>(true);
-  const [selectedBenchId, setSelectedBenchId] = useState<'A' | 'B' | 'C' | 'D' | 'E'>('A');
+  const [selectedBenchId, setSelectedBenchId] = useState<BenchId>('A');
+  const [selectedSpecialistId, setSelectedSpecialistId] = useState<string | undefined>(undefined);
 
   return (
     <div
@@ -116,7 +118,10 @@ export function App() {
               <div style={{ flex: '0 0 50%', height: '100%', position: 'relative' }}>
                 <TribunalChamber
                   selectedBenchId={selectedBenchId}
+                  selectedSpecialistId={selectedSpecialistId}
                   onSelectBench={setSelectedBenchId}
+                  onSelectSpecialist={setSelectedSpecialistId}
+                  theme={theme}
                 />
               </div>
             </>
@@ -147,7 +152,9 @@ export function App() {
         {destination === 'review' && (
           <BenchInspector
             selectedBenchId={selectedBenchId}
+            selectedSpecialistId={selectedSpecialistId}
             onSelectBench={setSelectedBenchId}
+            onSelectSpecialist={setSelectedSpecialistId}
           />
         )}
       </div>
