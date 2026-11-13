@@ -111,3 +111,4 @@ export class BenchChairConsolidator {
 }
 
 export const benchChairConsolidator = new BenchChairConsolidator();
+

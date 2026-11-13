@@ -17,7 +17,7 @@ This ledger tracks the status, primary deliverables, and verification gates acro
 | **11** | **Fifty Specialist Identities & Bench Registry** | Complete A01–E10 registry across 5 benches (10 specialists per bench), Chair 10th seat enforcement, Messenger & Presiding Reviewer separation, persistent seat & appearance IDs, role contract validator, multi-role perspective demonstrations (Tenancy, Employment, Citation, Adversarial, Plain Language), unselected role visibility without faked model calls, and automated 8-point verification suite. | Exactly fifty unique analyst IDs exist, ten in each bench; role, seat, finding and prompt identifiers agree without any imported registry or historical data. | **COMPLETED** |
 | **12** | **Durable Routing & Bounded Specialist Execution** | Persisted routing plans across all 50 specialists based on document type, uncertainty, jurisdiction, and questions; Stage progression (Stage 1 Bench A -> Stage 2 B/C -> Stage 3 D -> Stage 4 E); durable worker scheduling with claims, leases, deadlines, and retry budgets; independent first assessment and bounded contradiction round without agent voting; and automated 8-point verification suite. | Work resumes after restart without duplicating accepted findings; failures remain failed or partial; routing follows role eligibility and dependencies rather than arbitrary positional truncation. | **COMPLETED** |
 | **13** | **Bench Packets, Messenger & Presiding Review** | Versioned bench packet consolidation by chairs (A10–E10) with checksums; deterministic Messenger delivery with deduplication and persisted acknowledgments; AI Presiding Reviewer synthesis preserving dissent and gaps; post-synthesis reference grounding validation with publication blocking / partial policies; non-blocking animation milestones; and automated 8-point verification suite. | Duplicate packet delivery has one logical effect; citation failures and dissent survive synthesis; real events support a truthful visible handoff. | **COMPLETED** |
-| **14** | **Bench D: Adversarial Risk (10 Specialists)** | Specialists D01–D10, holder advocate vs counterparty advocate, ambiguity detection, financial penalties, Chair D10 packet. | Bench D highlights one-sided terms and calculates uncapped exposures. | Pending |
+| **14** | **Document-Grounded Questions Across Case** | Typed questions scoped to one document or all documents in the active snapshot; focused clarification on ambiguous "this agreement"; cross-document comparison and discrepancy calculation; absent information reporting without hallucination; preliminary OCR vs tribunal verified source status labeling; targeted review task assignment without 50-agent restart; multi-tenant session isolation; and stale snapshot version rejection. | Questions about either of two documents and their differences return correct citations; absent information produces no invented answer; stale responses cannot attach to a newer snapshot. | **COMPLETED** |
 | **15** | **Bench E: Verification & Plain Language (10 Specialists)** | Specialists E01–E10, audit trail checking, arithmetic verifier, plain-language translation, Chair E10 packet. | Bench E flags mathematical mismatches and removes unverified assertions. | Pending |
 | **16** | **Orchestration Engine & Specialist Task DAG** | Asynchronous worker scheduler, case-to-specialist routing, dependency DAG (Bench A -> B/C -> D -> E), execution bounds. | Full multi-bench execution runs within bounded latency without deadlocks. | Pending |
 | **17** | **Messenger Coordination & Packet Handover** | Inter-bench packet transport, integrity check, transit animation event emission, handoff to Presiding Reviewer. | Packets successfully validated and received at Presiding Reviewer desk. | Pending |
@@ -335,5 +335,44 @@ This ledger tracks the status, primary deliverables, and verification gates acro
 - **Verification Gate**:
   - All 8 acceptance tests executed and passed cleanly (`Exit Code: 0`).
   - Phase 11 and Phase 12 verification suites verified cleanly (`Exit Code: 0`).
+  - Monorepo typecheck passed with 0 errors across all 7 workspaces (`npm run typecheck`).
+  - Monorepo build passed across all 7 workspaces (`npm run build`).
+
+---
+
+## Phase 14 Execution Summary
+
+- **Deliverables**:
+  - `QaTurnService` (`apps/main-api/src/services/qa-turn-service.ts`):
+    - Grounded Q&A processing service supporting questions across all documents in a case (`documentScope: 'all'`) or targeted to a specific document (`documentScope: 'specific'`, `targetDocumentId`).
+    - **Ambiguity Clarification**: Detects ambiguous phrasing ("this agreement", "the contract") when multiple documents exist in a case without an explicit scope, returning a focused clarification prompt identifying candidate documents rather than guessing.
+    - **Exact Provenance & Source Anchors**: Attaches document title, snapshot version, page number, clause reference, and verbatim excerpts to every answer.
+    - **Cross-Document Comparison**: Compares terms across multiple documents (e.g. Lease vs Receipt on deposit amounts) and accurately computes financial variances (e.g. INR 20,000 difference).
+    - **Missing Document / Annexure Detection**: Accurately recognizes referenced exhibits (e.g. "Schedule B") absent from the scanned intake folio and reports the gap without content fabrication.
+    - **Review Explanation & Dissent**: Explains adversarial risk flags presenting both Document-Holder (D01) and Counterparty (D02) viewpoints under Section 74 of the Indian Contract Act.
+    - **Zero Hallucination Guard**: Explicitly declares when requested information (e.g. pet policies, smoking rules) is absent from the documents (`answerStatus: 'absent_from_documents'`).
+    - **Preliminary vs Verified Status**: Distinguishes answers based on preliminary OCR text (`sourceStatus: 'preliminary_unreviewed'`) from answers grounded in completed tribunal reviews (`sourceStatus: 'tribunal_verified'`).
+    - **Targeted Review Tasks**: Creates targeted specialist tasks (e.g. assigning `B09` Exit & Dispute Analyst for arbitration validity) without restarting the fifty-analyst tribunal.
+    - **Multi-Tenant Isolation**: Enforces case access authorization, strictly preventing any visitor session from querying another visitor's documents (`403 FORBIDDEN`).
+    - **Snapshot Currency & Invalidation**: Detects stale snapshot versions upon document replacement; rejects stale v1 queries (`answerStatus: 'stale_version_rejected'`) while allowing queries on the updated v2 snapshot, preserving immutable turn history.
+  - REST Endpoints (`apps/main-api/src/routes/qa.ts`, `apps/main-api/src/app.ts`):
+    - `POST /api/v1/cases/:id/qa/ask`: Submit grounded question with optional scope and language preference.
+    - `GET /api/v1/cases/:id/qa/turns`: Retrieve conversation history and provenance for a case.
+    - `GET /api/v1/cases/:id/qa/targeted-tasks/:taskId`: Inspect status of targeted review tasks.
+  - Automated 10-Point Verification Suite (`apps/main-api/src/tests/phase14-verification.ts`):
+    1. Targeted single-document scoped question with exact document and page citations.
+    2. Focused clarification requested on ambiguous "this agreement" reference.
+    3. Cross-document comparison on deposit amounts citing both Lease and Receipt.
+    4. Contractual obligations and lock-in period extraction.
+    5. Missing referenced document (Schedule B) detection without hallucination.
+    6. Review explanation with preserved adversarial dissent on deposit forfeiture.
+    7. Absent information reporting without fabricating synthetic terms.
+    8. Distinguishing preliminary unreviewed OCR text from completed tribunal findings.
+    9. Targeted review task creation for complex legal query without 50-agent restart.
+    10. Multi-tenant isolation and document replacement stale snapshot invalidation.
+
+- **Verification Gate**:
+  - All 10 acceptance tests executed and passed cleanly (`Exit Code: 0`).
+  - Phase 11, Phase 12, and Phase 13 verification test suites verified cleanly (`Exit Code: 0`).
   - Monorepo typecheck passed with 0 errors across all 7 workspaces (`npm run typecheck`).
   - Monorepo build passed across all 7 workspaces (`npm run build`).
