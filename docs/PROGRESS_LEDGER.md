@@ -13,7 +13,7 @@ This ledger tracks the status, primary deliverables, and verification gates acro
 | **07** | **UNO Q Gateway & Capture Adapter** | ARM64 Linux gateway for UNO Q, UVC document camera adapter, rate-limited mobile viewfinder preview (`640x480`), bounded disk spool (`SpoolService`, 20 captures / 50MB max), disk-pressure thresholding, durable server acknowledgment, cryptographic SHA-256 pre-hash verification, interruption recovery with stable page identities, explicit phone-camera fallback, supervised systemd service, hardware dependency specification, zero secret leakage. | A real or explicitly simulated page reaches central case once; no provider secret or long-lived device key reaches phone; capture survives a recoverable interruption. | **COMPLETED** |
 | **08** | **HTTPS Connection & Pairing (ngrok / LAN)** | Strict CORS allowlist; `TunnelSupervisor`; `PairingService` with single-use codes; HttpOnly/Secure/SameSite cookie exchange; CSRF/origin middleware; `/api/v1/connectivity` separating tunnel from main-API failures; ngrok ARM64 config; phone pairing flow with concurrent-takeover prevention; card-return pairing revocation; 10-test verification suite. | Phone can capture and receive status over HTTPS; unpaired browser is denied; tunnel and main-API failures reported separately. | **COMPLETED** |
 | **09** | **Multiple-Document Intake & OCR** | Multi-document grouping (agreement + receipt + annexure), parent-annexure linkage, page-by-page intake, page reordering, rotation, recapture, Indian script OCR (Kannada, Devanagari, Latin), full text (>1,000 chars without truncation), table & negation detection, uncertainty audit trail & review text correction, duplicate page detection without silent deletion, cross-document discrepancy detection, immutable case-document snapshots (v1 -> v2) with combined fingerprint, stale finding detection, and automated 8-point verification suite. | Document boundaries and page order survive capture/retry; every extracted passage points to its actual document/version/page; changes cannot silently reuse stale findings. | **COMPLETED** |
-| **10** | **Source Retrieval & Evidence Provenance** | Case-restricted document index, lexical/semantic retrieval, curated Indian statute corpus, exact citation anchors. | Citations point to verified sections/paragraphs; missing law acknowledged. | Pending |
+| **10** | **Source Retrieval & Evidence Provenance** | Case-restricted evidence indexing (BM25 lexical retrieval), curated Indian statutory corpus (Transfer of Property Act, Contract Act, Rent Acts, Consumer Protection), landmark Supreme Court precedents, location anchors (`doc:...`, `statute:...`, `precedent:...`), missing annexure & uncurated statute limitations, stale/repealed law detection, wrong jurisdiction filtering, and automated 10-point verification suite. | Citations point to verified sections/paragraphs; missing law acknowledged. | **COMPLETED** |
 | **11** | **Bench A: Document & Evidence (10 Specialists)** | Specialists A01–A10, extraction validation, date/amount normalization, contradiction detection, Chair A10 packet. | Bench A returns structured BenchPacket with verbatim excerpts and line coordinates. | Pending |
 | **12** | **Bench B: Rights & Obligations (10 Specialists)** | Specialists B01–B10, domain contract analysis (tenancy, employment, sale, debt, consumer), Chair B10 packet. | Bench B accurately maps duties, lock-in clauses, and default remedies. | Pending |
 | **13** | **Bench C: Indian Legal Sources (10 Specialists)** | Specialists C01–C10, statute retrieval, precedent relevance, jurisdiction checking, Citation Verifier C09. | C09 validates act sections and flags unverified citations or state variations. | Pending |
@@ -151,5 +151,57 @@ This ledger tracks the status, primary deliverables, and verification gates acro
 
 - **Verification Gate**:
   - All 8 acceptance tests executed and passed cleanly (`Exit Code: 0`).
+  - Monorepo typecheck passed with 0 errors across all 7 workspaces (`npm run typecheck`).
+  - Monorepo build passed across all 7 workspaces (`npm run build`).
+
+---
+
+## Phase 10 Execution Summary
+
+- **Deliverables**:
+  - `retrieval.ts` shared contracts (`packages/shared-contracts/src/retrieval.ts` & `index.ts`):
+    - `CuratedLegalSource`: Authoritative statutory/precedent records with `shortCode`, `sectionOrItemNumber`, `jurisdiction`, `effectiveDate`, `repealedDate`, `lastReviewedDate`, `officialVerbatimText`, `sourceLocationAnchor`.
+    - `EvidenceChunk`: Anchored user document passages with `caseId`, `snapshotVersion`, `documentId`, `pageNumber`, `sourceAnchor`, `containsDates`, `containsAmounts`, `containsNegation`, `isTable`.
+    - `RetrievalQuery` & `RetrievalResponse`: Case-restricted queries with scope (`all_documents` vs `single_document`), jurisdiction filtering, `evidenceHits`, `authorityHits`, and `missingSourceLimitations`.
+    - `MissingSourceLimitation`: Structured limitation records identifying missing referenced annexures or unverified statutes with actionable clarification prompts.
+  - `CuratedLegalCorpusService` (`apps/main-api/src/services/curated-legal-corpus.ts`):
+    - Curated, non-fabricated Indian legal corpus:
+      - *Transfer of Property Act, 1882* (Sections 105, 106, 108, 111): Lease definitions, notice periods, tenant restoration obligations, determination/forfeiture.
+      - *Indian Contract Act, 1872* (Sections 27, 74): Restraint of trade void (non-compete clauses) and penalty stipulations vs reasonable compensation.
+      - *Karnataka Rent Act, 1999* (Section 2): Commercial exemption thresholds for premises > 14 sq.m.
+      - *Maharashtra Rent Control Act, 1999* (Section 55): Compulsory registration under Maharashtra jurisdiction (used to test jurisdiction separation).
+      - *Urban Land (Ceiling and Regulation) Act, 1976 (Repealed)*: Used to verify stale/repealed law detection.
+      - *Consumer Protection Act, 2019* (Section 2(46)): Statutory definition of unfair contract terms and disproportionate penalties.
+      - Landmark Precedents: *Fateh Chand v. Balkishan Das (1964)* (deposit forfeiture rule) and *Percept D'Mark v. Zaheer Khan (2006)* (post-contractual non-compete void).
+    - `evaluateApplicability()`: Temporal check (flags `stale_or_repealed`) and jurisdiction check (flags `wrong_jurisdiction`).
+  - `EvidenceIndexService` (`apps/main-api/src/services/evidence-index-service.ts`):
+    - Extracts and indexes anchored chunks from active case snapshot.
+    - BM25 lexical retrieval engine with phrase boosting and clause number weighting.
+    - Strict case-restricted indexing preventing any cross-case leakage.
+    - Late page indexing ensuring pages 1..N (e.g. Page 5) are indexed and retrieved with exact anchors.
+  - `SourceRetrievalService` (`apps/main-api/src/services/source-retrieval-service.ts`):
+    - Dual-corpus retrieval orchestrator keeping case evidence, legal statutes, and legal precedents distinctly labeled.
+    - Automated detection of unattached referenced exhibits (e.g. "Schedule B") producing honest `MissingSourceLimitation` instead of hallucinating terms.
+    - Unsupported law queries produce structured limitations without fabricating synthetic India Code or SCR citations.
+    - `resolveLocationAnchor()`: Resolves `doc:...` and `statute:...` anchors to exact documents, pages, and verbatim legal text.
+  - REST Endpoints (`apps/main-api/src/routes/retrieval.ts`, `apps/main-api/src/app.ts`):
+    - `POST /cases/:id/retrieval/query`: Execute authorized retrieval query.
+    - `GET /cases/:id/retrieval/resolve-anchor`: Open source location anchor.
+    - `GET /retrieval/legal-corpus`: Browse/search curated legal corpus.
+    - `GET /retrieval/legal-corpus/:sourceId`: Retrieve specific statutory provision or precedent.
+  - Automated 10-Point Verification Suite (`apps/main-api/src/tests/phase10-verification.ts`):
+    1. Case-restricted retrieval: Case B confidential data inaccessible from Case A.
+    2. References on late pages: Page 5 dispute resolution retrieved with exact line/page anchor.
+    3. Cross-document retrieval: Multi-document query returns chunks from both Agreement and linked Annexure A.
+    4. Missing annexure detection: "Schedule B" reference detected and honest clarification prompt produced.
+    5. Curated legal authority retrieval: Section 74 & *Fateh Chand* precedent retrieved for deposit penalty queries.
+    6. Stale/repealed law detection: Urban Land Ceiling Act flagged `stale_or_repealed`.
+    7. Wrong jurisdiction detection: Maharashtra Rent Control Act flagged `wrong_jurisdiction` on Karnataka lease.
+    8. Unsupported law handling: Foreign/uncurated law query produces structured limitation with zero fabricated citations.
+    9. Anchor resolution: `statute:tpa_1882:s105` and `precedent:...` resolve to verified verbatim text.
+    10. Distinct labeling: User document chunks labeled `case_evidence`; statutory provisions labeled `legal_statute`/`legal_precedent`.
+
+- **Verification Gate**:
+  - All 10 acceptance tests executed and passed cleanly (`Exit Code: 0`).
   - Monorepo typecheck passed with 0 errors across all 7 workspaces (`npm run typecheck`).
   - Monorepo build passed across all 7 workspaces (`npm run build`).

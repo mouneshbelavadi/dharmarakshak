@@ -540,3 +540,4 @@ Upon termination or expiry of the lease, Lessee shall restore all fixtures in sa
 }
 
 runPhase09Verification();
+
