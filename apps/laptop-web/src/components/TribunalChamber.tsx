@@ -20,6 +20,10 @@ import {
 } from './chamber-types.js';
 import { Chamber2DFallback } from './Chamber2DFallback.js';
 import { ChamberOverlayControls } from './ChamberOverlayControls.js';
+import { AnimatedSpecialist } from './character/AnimatedSpecialist.js';
+import { AnimatedMessenger } from './character/AnimatedMessenger.js';
+import { CharacterActivity } from './character/types.js';
+import { SingleCharacterValidator } from './character/SingleCharacterValidator.js';
 import { AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
 
 // ─── Camera Controller with Smooth Lerping & Reduced Motion ─────────────────
@@ -63,134 +67,7 @@ const CameraController: React.FC<CameraControllerProps> = ({ preset, reducedMoti
   );
 };
 
-// ─── Individual Specialist Seat Component ───────────────────────────────────
-interface SpecialistSeatProps {
-  specialist: SpecialistDefinition;
-  position: [number, number, number];
-  rotationY: number;
-  isSelected: boolean;
-  onSelect: (specialistId: string) => void;
-  theme: 'split' | 'light' | 'dark';
-}
-
-const SpecialistSeat: React.FC<SpecialistSeatProps> = ({
-  specialist,
-  position,
-  rotationY,
-  isSelected,
-  onSelect,
-  theme
-}) => {
-  const [hovered, setHovered] = useState(false);
-  const isLight = theme === 'light';
-  const isChair = specialist.isChair;
-
-  const baseColor = isSelected
-    ? '#38bdf8'
-    : isChair
-      ? '#f59e0b'
-      : isLight
-        ? '#cbd5e1'
-        : '#475569';
-
-  const emissiveColor = isSelected
-    ? '#0284c7'
-    : isChair
-      ? '#d97706'
-      : hovered
-        ? '#38bdf8'
-        : '#000000';
-
-  const emissiveIntensity = isSelected ? 0.7 : hovered ? 0.4 : isChair ? 0.3 : 0;
-
-  return (
-    <group
-      position={position}
-      rotation={[0, rotationY, 0]}
-      onClick={(e) => {
-        e.stopPropagation();
-        onSelect(specialist.id);
-      }}
-      onPointerOver={(e) => {
-        e.stopPropagation();
-        setHovered(true);
-        document.body.style.cursor = 'pointer';
-      }}
-      onPointerOut={() => {
-        setHovered(false);
-        document.body.style.cursor = 'auto';
-      }}
-    >
-      {/* Active Selection Beacon Ring */}
-      {isSelected && (
-        <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[0.35, 0.48, 24]} />
-          <meshBasicMaterial color="#38bdf8" transparent opacity={0.8} />
-        </mesh>
-      )}
-
-      {/* Seat Pedestal */}
-      <mesh position={[0, isChair ? 0.28 : 0.22, 0]}>
-        <cylinderGeometry args={[0.22, 0.25, isChair ? 0.56 : 0.44, 16]} />
-        <meshStandardMaterial
-          color={baseColor}
-          emissive={emissiveColor}
-          emissiveIntensity={emissiveIntensity}
-          roughness={isChair ? 0.3 : 0.5}
-          metalness={isChair ? 0.8 : 0.3}
-        />
-      </mesh>
-
-      {/* Seat Cushion Top */}
-      <mesh position={[0, isChair ? 0.58 : 0.46, 0]}>
-        <cylinderGeometry args={[0.26, 0.26, 0.06, 16]} />
-        <meshStandardMaterial
-          color={isChair ? '#fbbf24' : isSelected ? '#7dd3fc' : isLight ? '#f1f5f9' : '#1e293b'}
-          roughness={0.4}
-        />
-      </mesh>
-
-      {/* Backrest Totem */}
-      <mesh position={[0, isChair ? 0.85 : 0.68, -0.2]}>
-        <boxGeometry args={[0.3, isChair ? 0.45 : 0.35, 0.06]} />
-        <meshStandardMaterial
-          color={isChair ? '#ca8a04' : isLight ? '#94a3b8' : '#334155'}
-          metalness={isChair ? 0.7 : 0.2}
-          roughness={0.4}
-        />
-      </mesh>
-
-      {/* Chair Crown / Finial (Seat 10 only) */}
-      {isChair && (
-        <group position={[0, 1.15, -0.2]}>
-          <mesh>
-            <coneGeometry args={[0.12, 0.18, 5]} />
-            <meshStandardMaterial
-              color="#fbbf24"
-              emissive="#f59e0b"
-              emissiveIntensity={0.6}
-              metalness={0.9}
-              roughness={0.2}
-            />
-          </mesh>
-        </group>
-      )}
-
-      {/* Specialist Seat ID Label */}
-      <Text
-        position={[0, isChair ? 1.35 : 1.05, 0]}
-        fontSize={isChair ? 0.18 : 0.15}
-        color={isChair ? '#fbbf24' : isSelected ? '#38bdf8' : '#ffffff'}
-        anchorX="center"
-        anchorY="middle"
-      >
-        {specialist.id}
-      </Text>
-    </group>
-  );
-};
-
-// ─── Bench Round Table Component (with 10 specialist seats) ─────────────────
+// ─── Bench Round Table Component (with 10 animated specialist seats) ────────
 interface RoundTableProps {
   bench: BenchDefinition;
   position: [number, number, number];
@@ -199,6 +76,8 @@ interface RoundTableProps {
   onSelectBench: (benchId: BenchId) => void;
   onSelectSpecialist: (specialistId: string) => void;
   theme: 'split' | 'light' | 'dark';
+  currentActivity?: CharacterActivity;
+  reducedMotion?: boolean;
 }
 
 const RoundTable: React.FC<RoundTableProps> = ({
@@ -208,7 +87,9 @@ const RoundTable: React.FC<RoundTableProps> = ({
   selectedSpecialistId,
   onSelectBench,
   onSelectSpecialist,
-  theme
+  theme,
+  currentActivity = 'idle_breathing',
+  reducedMotion = false
 }) => {
   const isLight = theme === 'light';
   const radius = 2.5;
@@ -246,7 +127,7 @@ const RoundTable: React.FC<RoundTableProps> = ({
         />
       </mesh>
 
-      {/* Bench Circular Table Surface */}
+      {/* Bench Circular Table Surface (y = 0.42m) */}
       <mesh
         position={[0, 0.42, 0]}
         onClick={(e) => {
@@ -281,7 +162,7 @@ const RoundTable: React.FC<RoundTableProps> = ({
 
       {/* Bench Header Floating Label */}
       <Text
-        position={[0, 1.7, 0]}
+        position={[0, 2.1, 0]}
         fontSize={0.36}
         color={isSelected ? '#38bdf8' : '#ffffff'}
         anchorX="center"
@@ -290,7 +171,7 @@ const RoundTable: React.FC<RoundTableProps> = ({
         {`Bench ${bench.id}`}
       </Text>
       <Text
-        position={[0, 1.35, 0]}
+        position={[0, 1.75, 0]}
         fontSize={0.19}
         color="#94a3b8"
         anchorX="center"
@@ -299,21 +180,65 @@ const RoundTable: React.FC<RoundTableProps> = ({
         {bench.name}
       </Text>
 
-      {/* 10 Individually Selectable Specialist Seats */}
-      {specialistSeats.map(({ spec, x, z, rotationY }) => (
-        <SpecialistSeat
-          key={spec.id}
-          specialist={spec}
-          position={[x, 0, z]}
-          rotationY={rotationY}
-          isSelected={selectedSpecialistId === spec.id}
-          onSelect={(id) => {
-            onSelectBench(bench.id);
-            onSelectSpecialist(id);
-          }}
-          theme={theme}
-        />
-      ))}
+      {/* 10 Animated Specialists Seated around Table */}
+      {specialistSeats.map(({ spec, x, z, rotationY }) => {
+        const isChair = spec.isChair;
+        const isSpecSelected = selectedSpecialistId === spec.id;
+
+        return (
+          <group key={spec.id}>
+            {/* Chair Furniture Base Under Character */}
+            <group position={[x, 0, z]} rotation={[0, rotationY, 0]}>
+              <mesh position={[0, isChair ? 0.26 : 0.22, 0]}>
+                <cylinderGeometry args={[0.22, 0.25, isChair ? 0.52 : 0.44, 16]} />
+                <meshStandardMaterial
+                  color={isChair ? '#fbbf24' : isLight ? '#cbd5e1' : '#334155'}
+                  metalness={isChair ? 0.8 : 0.2}
+                  roughness={0.4}
+                />
+              </mesh>
+              <mesh position={[0, isChair ? 0.54 : 0.46, 0]}>
+                <cylinderGeometry args={[0.26, 0.26, 0.06, 16]} />
+                <meshStandardMaterial color={isChair ? '#d97706' : '#1e293b'} />
+              </mesh>
+              <mesh position={[0, isChair ? 0.85 : 0.68, -0.2]}>
+                <boxGeometry args={[0.3, isChair ? 0.45 : 0.35, 0.06]} />
+                <meshStandardMaterial color={isChair ? '#ca8a04' : '#1e293b'} />
+              </mesh>
+              {isChair && (
+                <mesh position={[0, 1.15, -0.2]}>
+                  <coneGeometry args={[0.10, 0.16, 5]} />
+                  <meshStandardMaterial color="#fbbf24" emissive="#f59e0b" emissiveIntensity={0.6} />
+                </mesh>
+              )}
+              {/* Specialist ID Label */}
+              <Text
+                position={[0, isChair ? 1.4 : 1.25, 0]}
+                fontSize={0.15}
+                color={isChair ? '#fbbf24' : isSpecSelected ? '#38bdf8' : '#ffffff'}
+                anchorX="center"
+                anchorY="middle"
+              >
+                {spec.id}
+              </Text>
+            </group>
+
+            {/* Skinned Animated Specialist Character */}
+            <AnimatedSpecialist
+              specialist={spec}
+              position={[x, 0, z]}
+              rotationY={rotationY}
+              activity={currentActivity}
+              isSelected={isSpecSelected}
+              onSelect={(id) => {
+                onSelectBench(bench.id);
+                onSelectSpecialist(id);
+              }}
+              reducedMotion={reducedMotion}
+            />
+          </group>
+        );
+      })}
     </group>
   );
 };
@@ -473,12 +398,13 @@ const PresidingReviewerPodium: React.FC<PresidingReviewerPodiumProps> = ({ onSel
   );
 };
 
-// ─── Messenger Courier Floor Route & Moving Courier ─────────────────────────
+// ─── Messenger Courier Floor Route & Moving Animated Courier ────────────────
 interface MessengerRouteProps {
   selectedBenchId: BenchId;
+  reducedMotion?: boolean;
 }
 
-const MessengerRoute: React.FC<MessengerRouteProps> = ({ selectedBenchId }) => {
+const MessengerRoute: React.FC<MessengerRouteProps> = ({ selectedBenchId, reducedMotion = false }) => {
   const activeTablePos = BENCH_TABLE_POSITIONS[selectedBenchId];
 
   // Render brass inlaid transit tracks on the floor connecting tables, well, and podium
@@ -509,30 +435,13 @@ const MessengerRoute: React.FC<MessengerRouteProps> = ({ selectedBenchId }) => {
         );
       })}
 
-      {/* Floating Messenger Courier Node along the active route */}
-      <Float speed={2.5} rotationIntensity={0.6} floatIntensity={0.4}>
-        <group position={[(activeTablePos[0] + EVIDENCE_WELL_POSITION[0]) * 0.45, 0.9, (activeTablePos[2] + EVIDENCE_WELL_POSITION[2]) * 0.45]}>
-          <mesh>
-            <octahedronGeometry args={[0.35]} />
-            <meshStandardMaterial
-              color="#38bdf8"
-              emissive="#0284c7"
-              emissiveIntensity={0.8}
-              roughness={0.2}
-              metalness={0.9}
-            />
-          </mesh>
-          <Text
-            position={[0, 0.65, 0]}
-            fontSize={0.18}
-            color="#38bdf8"
-            anchorX="center"
-            anchorY="middle"
-          >
-            Messenger Courier
-          </Text>
-        </group>
-      </Float>
+      {/* Animated Humanoid Messenger Courier moving along the active transit line */}
+      <AnimatedMessenger
+        position={[(activeTablePos[0] + EVIDENCE_WELL_POSITION[0]) * 0.45, 0, (activeTablePos[2] + EVIDENCE_WELL_POSITION[2]) * 0.45]}
+        targetPosition={EVIDENCE_WELL_POSITION}
+        activity="messenger_locomotion"
+        reducedMotion={reducedMotion}
+      />
     </group>
   );
 };
@@ -558,6 +467,8 @@ export const TribunalChamber: React.FC<TribunalChamberProps> = ({
   const [reducedMotion, setReducedMotion] = useState<boolean>(false);
   const [contextLost, setContextLost] = useState<boolean>(false);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const [currentActivity, setCurrentActivity] = useState<CharacterActivity>('idle_breathing');
+  const [showValidator, setShowValidator] = useState<boolean>(false);
 
   // Check system prefers-reduced-motion on mount
   useEffect(() => {
@@ -585,6 +496,16 @@ export const TribunalChamber: React.FC<TribunalChamberProps> = ({
     }
   };
 
+  // If Single Character Validator is active, render isolated validation rig
+  if (showValidator) {
+    return (
+      <SingleCharacterValidator
+        onClose={() => setShowValidator(false)}
+        theme={theme}
+      />
+    );
+  }
+
   // If 2D Fallback is active or WebGL context is lost, render 2D view
   if (is2DFallback || contextLost) {
     return (
@@ -606,6 +527,9 @@ export const TribunalChamber: React.FC<TribunalChamberProps> = ({
           onSelectBench={handleSelectBench}
           onSelectSpecialist={handleSelectSpecialist}
           theme={theme}
+          currentActivity={currentActivity}
+          onSelectActivity={setCurrentActivity}
+          onOpenValidator={() => setShowValidator(true)}
         />
         <Chamber2DFallback
           selectedBenchId={selectedBenchId}
@@ -622,7 +546,7 @@ export const TribunalChamber: React.FC<TribunalChamberProps> = ({
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', background: themeConfig.floorBg, overflow: 'hidden' }}>
-      {/* HTML Overlay Controls: Presets, 2D/3D toggle, reduced motion, specialist selector */}
+      {/* HTML Overlay Controls: Presets, 2D/3D toggle, reduced motion, specialist selector, activity selector */}
       <ChamberOverlayControls
         currentPreset={currentPreset}
         onSelectPreset={setCurrentPreset}
@@ -635,13 +559,16 @@ export const TribunalChamber: React.FC<TribunalChamberProps> = ({
         onSelectBench={handleSelectBench}
         onSelectSpecialist={handleSelectSpecialist}
         theme={theme}
+        currentActivity={currentActivity}
+        onSelectActivity={setCurrentActivity}
+        onOpenValidator={() => setShowValidator(true)}
       />
 
       {/* WebGL 3D Canvas */}
       <Suspense fallback={
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', color: '#38bdf8', gap: '8px' }}>
           <Loader2 style={{ width: 20, height: 20, animation: 'spin 1s linear infinite' }} />
-          <span>Initializing 3D Tribunal Chamber...</span>
+          <span>Initializing 3D Tribunal Chamber & Humanoid Cast...</span>
         </div>
       }>
         <Canvas
@@ -684,8 +611,8 @@ export const TribunalChamber: React.FC<TribunalChamberProps> = ({
             <meshStandardMaterial color={themeConfig.brassAccent} metalness={0.8} roughness={0.2} opacity={0.6} transparent />
           </mesh>
 
-          {/* Messenger Courier Transit Track Lines */}
-          <MessengerRoute selectedBenchId={selectedBenchId} />
+          {/* Messenger Courier Transit Track Lines & Animated Courier */}
+          <MessengerRoute selectedBenchId={selectedBenchId} reducedMotion={reducedMotion} />
 
           {/* Central Evidence Well */}
           <EvidenceWell
@@ -693,7 +620,7 @@ export const TribunalChamber: React.FC<TribunalChamberProps> = ({
             theme={theme}
           />
 
-          {/* Five Distinctive Bench Round Tables with 10 Seats Each */}
+          {/* Five Distinctive Bench Round Tables with 10 Animated Specialists Each */}
           {BENCHES.map((bench) => (
             <RoundTable
               key={bench.id}
@@ -704,6 +631,8 @@ export const TribunalChamber: React.FC<TribunalChamberProps> = ({
               onSelectBench={handleSelectBench}
               onSelectSpecialist={handleSelectSpecialist}
               theme={theme}
+              currentActivity={currentActivity}
+              reducedMotion={reducedMotion}
             />
           ))}
 

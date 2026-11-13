@@ -12,6 +12,7 @@
     "test:phase13": "node dist/tests/phase13-verification.js",
     "test:phase15": "node dist/tests/phase15-verification.js",
     "test:phase16": "node dist/tests/phase16-verification.js",
+    "test:phase17": "node dist/tests/phase17-verification.js",
     "dev": "tsc -w",
     "clean": "rimraf dist"
   },

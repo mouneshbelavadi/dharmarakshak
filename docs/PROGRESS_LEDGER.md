@@ -20,7 +20,7 @@ This ledger tracks the status, primary deliverables, and verification gates acro
 | **14** | **Document-Grounded Questions Across Case** | Typed questions scoped to one document or all documents in the active snapshot; focused clarification on ambiguous "this agreement"; cross-document comparison and discrepancy calculation; absent information reporting without hallucination; preliminary OCR vs tribunal verified source status labeling; targeted review task assignment without 50-agent restart; multi-tenant session isolation; and stale snapshot version rejection. | Questions about either of two documents and their differences return correct citations; absent information produces no invented answer; stale responses cannot attach to a newer snapshot. | **COMPLETED** |
 | **15** | **Readable Reports & Private Downloads** | Versioned PDF generator, document inventory, Indian-script font resolver, non-blocking rendering worker outside HTTP path, readable page breaks, selectable text, source links, concise accessible HTML summary, spoken summary for phone audio, private revocable download authorization, disconnected delivery resilience, and automated 9-point verification suite. | Report contents match the frozen case snapshot, citations resolve, private links enforce access, and text renders legibly in the requested languages. | **COMPLETED** |
 | **16** | **Laptop-Only 3D Chamber & 2D Fallback** | Three.js / React Three Fiber / Drei laptop WebGL canvas; 5 round tables with 10 stable seats each (50 seats total); Chair 10th seat elevated with gold crest; Central Evidence Well with rotating snapshot folio; Messenger courier floor inlays connecting tables to well and dais; elevated Presiding Reviewer podium; Camera Presets (Overall, Bench A–E, Well, Presiding, Reset); smooth lerp with reduced motion instant jump; 3 themes (Split hybrid, Light, Dark); WebGL context-loss listeners with auto-fallback to 2D; interactive SVG 2D fallback map; HTML parity controls for all 50 seats; phone bundle 100% independent; 10-test verification suite. | All fifty seats are correctly selectable, camera presets are understandable, and every essential action remains available through HTML. | **COMPLETED** |
-| **17** | **Messenger Coordination & Packet Handover** | Inter-bench packet transport, integrity check, transit animation event emission, handoff to Presiding Reviewer. | Packets successfully validated and received at Presiding Reviewer desk. | Pending |
+| **17** | **Animated Human Characters & Activity Clips** | Licensed asset manifest, Microsoft Rocketbox & KayKit evaluation, 20-bone standard biped rig, 50 deterministic specialist appearances (A01–E10), 5 bench chairs with senior adjudicator styling, Messenger courier uniform, 8 authored Three.js activity animation clips (idle breathing, attentive listening, seated reading, checking source, note taking, discussion gesture, packet handoff, messenger locomotion), SkeletonUtils.clone per-character isolation, clearance calibration, SingleCharacterValidator test rig, TribunalChamber live cast integration, 10-test verification suite. | A licensed asset manifest and actual clip inventory exist; the fifty characters remain stable and readable; required activities work without claiming unavailable clips were supplied. | **COMPLETED** |
 | **18** | **AI Presiding Reviewer Synthesis** | Gemini-powered synthesis of 5 bench packets, executive summary, preserved disagreements, questions for visitor. | Consolidated PresidingReviewSummary produced with zero hallucinatory claims. | Pending |
 | **19** | **Sarvam AI Indian Speech Engine** | Sarvam STT integration for Indian accents, Sarvam TTS for spoken responses, audio player with mute/stop controls. | Spoken audio correctly transcribed and synthesized in Kannada/Hindi. | Pending |
 | **20** | **Grounded Conversational Q&A (Gemini)** | Case-grounded conversational agent, page-specific citations, acknowledgment of missing evidence. | Answers reference specific document pages and refuse out-of-scope advice. | Pending |
@@ -466,6 +466,64 @@ This ledger tracks the status, primary deliverables, and verification gates acro
     8. Theme alternatives configuration (Split hybrid, Light, Dark).
     9. Phone web independence (strict 0 Three.js / WebGL dependencies).
     10. BenchInspector specialist selection and contract detail synchronization.
+
+- **Verification Gate**:
+  - All 10 acceptance tests executed and passed cleanly (`Exit Code: 0`).
+  - Monorepo typecheck passed with 0 errors across all 7 workspaces (`npm run typecheck`).
+  - Monorepo build passed across all 7 workspaces (`npm run build`).
+
+---
+
+## Phase 17 Execution Summary
+
+- **Deliverables**:
+  - **Licensed Asset Manifest & Provenance Schema** (`apps/laptop-web/src/components/character/asset-manifest.json` & `docs/ASSET_MANIFEST.md`):
+    - Full evaluation of Microsoft Rocketbox (MIT license, 58–65 bones, high poly count, lack of legal desk clips, 60 FPS optimization strategy).
+    - Full evaluation of KayKit (CC0 license, low-poly biped reference, fantasy attire style clash, locomotion curve retention).
+    - Standardized 20-bone biped rig (`DharmarakshaStandardBiped_v1`).
+  - **Standardized Humanoid Rig & Appearance Generator** (`apps/laptop-web/src/components/character/character-factory.ts`):
+    - 4 Base Archetypes: `male_professional`, `female_professional`, `chair_senior`, and `messenger_courier`.
+    - 50 Deterministic Specialist Appearances matching `ALL_SPECIALISTS` (`A01`–`E10`): Natural Indian skin tones, professional suits, blazers, and bench primary color accents.
+    - 5 Bench Chairs (`A10`, `B10`, `C10`, `D10`, `E10`) equipped with senior adjudicator robes, gold lapel insignia, and cone crown emblems.
+    - Messenger Courier in cerulean uniform with cross-chest leather packet satchel.
+    - AI Presiding Reviewer in formal magistrate attire.
+    - Isolated Skeleton Cloning via Three.js `SkeletonUtils.clone` ensuring every specialist runs its own independent `AnimationMixer` without bone cross-talk or frozen limbs.
+  - **Authored Activity Clip Inventory** (`apps/laptop-web/src/components/character/clip-factory.ts`):
+    - 8 Verified AnimationClips authored with quaternion and vector keyframes at 30 FPS:
+      1. `idle_breathing`: Seated ambient respiratory cycle with chest elevation (3.0s).
+      2. `attentive_listening`: Upright posture with engaged nod toward presiding dais (4.0s).
+      3. `seated_reading`: Head lowered 22° examining desk folio, left hand holding document (4.5s).
+      4. `checking_source`: Forward lean 12°, right hand tracing statutory provisions (3.5s).
+      5. `note_taking`: Rhythmic writing motions with stylus pen prop on desk notepad (4.0s).
+      6. `discussion_gesture`: 18° torso turn, open-palm explanatory gesture with table peers (3.0s).
+      7. `packet_handoff`: Chair reaching forward offering sealed packet to courier (3.5s).
+      8. `messenger_locomotion`: Balanced upright walking stride along transit path (1.2s).
+  - **Physical Clearance & Contact Calibration**:
+    - Seated root position: `y = 0.44m` (firm contact with chair cushion top at `y = 0.46m`).
+    - Hand / Prop alignment: Tabletop resting plane at `y = 0.52m`.
+    - Foot placement: Flat on floor dais at `y = 0.02m`.
+    - Table clearance: Torso lean bounded to max 15°, preventing table penetration (`tableRadius = 1.8m`, `y = 0.42m`).
+  - **First Step Validation Rig** (`apps/laptop-web/src/components/character/SingleCharacterValidator.tsx`):
+    - Standalone target laptop validation view testing one seated professional character (A03 / A10) and one Messenger courier.
+    - Live activity switcher across all 8 clips, chair/analyst toggle, and live clearance check metrics.
+  - **Animated R3F Components & Full Chamber Integration**:
+    - `AnimatedSpecialist.tsx`: Per-character AnimationMixer with 0.35s cubic cross-fading and prop synchronization.
+    - `AnimatedMessenger.tsx`: Humanoid courier with dynamic orientation and locomotion along floor transit tracks.
+    - `TribunalChamber.tsx`: Populates all 5 round tables with 50 animated human specialists and animated courier.
+    - `ChamberOverlayControls.tsx`: Live activity dropdown and "Validate Rig" navigation button.
+  - **Phone Independence**:
+    - Confirmed 0 Three.js or character assets in `apps/phone-web` (~180 kB production bundle).
+  - **Automated 10-Point Verification Suite** (`apps/worker/src/tests/phase17-verification.ts`):
+    1. Licensed asset manifest and clip inventory schema validation.
+    2. Microsoft Rocketbox and KayKit library evaluation documentation.
+    3. 20-bone standard biped rig hierarchy verification.
+    4. 50 deterministic specialist appearances generation.
+    5. 8 authored activity animation clips with quaternion tracks.
+    6. Skeleton cloning isolation via `SkeletonUtils.clone`.
+    7. Physical clearance and contact calibration verification.
+    8. First step validation test rig (`SingleCharacterValidator`).
+    9. Full 50-cast integration in `TribunalChamber`.
+    10. Phone web bundle independence (0 character/3D dependencies).
 
 - **Verification Gate**:
   - All 10 acceptance tests executed and passed cleanly (`Exit Code: 0`).

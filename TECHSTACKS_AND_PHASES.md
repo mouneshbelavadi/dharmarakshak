@@ -39,6 +39,7 @@ This section documents every technology, runtime, framework, library, protocol, 
 - **@react-three/fiber v8.16.6**: React reconciler for Three.js managing declarative scene graphs, camera mounts, and canvas lifecycles.
 - **@react-three/drei v9.105.6**: Helper utilities including `OrbitControls`, `Text` SDF typography rendering, and `Float` physics-free ambient floating markers.
 - **Custom Exponential Lerp Controller**: Smooth camera preset transitions (`overall`, `bench-A`–`E`, `document`, `presiding`, `reset`) with automatic reduced-motion snapping.
+- **Three.js SkeletonUtils & Humanoid Animation Engine**: Unified 20-bone biped rig (`DharmarakshaStandardBiped_v1`), per-character `SkeletonUtils.clone` skeleton isolation, quaternion keyframe interpolation at 30 FPS, 8 custom-authored activity clips, calibrated physical contact constraints, and Microsoft Rocketbox / KayKit evaluations.
 - **WebGL Context Loss & Restoration Listeners**: Real-time event handling for `webglcontextlost` and `webglcontextrestored` to ensure zero user-facing crashes.
 - **Pure SVG Architectural Fallback**: 100% accessible, interactive 2D floor plan (`viewBox="0 0 800 700"`) providing full parity without WebGL dependencies.
 
@@ -394,6 +395,52 @@ Phases 13–16 ──► Bench Packets & Messenger, Q&A, PDF Reports, 3D Chamber
 
 ---
 
+## Phase 17: Animated Human Characters & Activity Clips
+
+- **Depends on**: Phase 16.
+- **Core Objective**: Produce animated human characters and activity clips, validating one seated professional character and one Messenger on the target laptop before producing the full 50-specialist cast, preserving license records, establishing an 8-clip inventory, and enforcing chair contact and table clearance.
+- **Key Deliverables**:
+  - `asset-manifest.json` & `docs/ASSET_MANIFEST.md`:
+    - Full evaluation of Microsoft Rocketbox (MIT license, 58–65 bones, high poly count, lack of legal desk clips, 60 FPS optimization strategy).
+    - Full evaluation of KayKit (CC0 license, low-poly biped reference, fantasy attire style clash, locomotion curve retention).
+    - Standardized 20-bone biped rig (`DharmarakshaStandardBiped_v1`).
+  - `character-factory.ts`:
+    - 4 Base Archetypes: `male_professional`, `female_professional`, `chair_senior`, and `messenger_courier`.
+    - 50 Deterministic Specialist Appearances matching `ALL_SPECIALISTS` (`A01`–`E10`): Natural Indian skin tones, professional suits, blazers, and bench primary color accents.
+    - 5 Bench Chairs (`A10`, `B10`, `C10`, `D10`, `E10`) equipped with senior adjudicator robes, gold lapel insignia, and cone crown emblems.
+    - Messenger Courier in cerulean uniform with cross-chest leather packet satchel.
+    - AI Presiding Reviewer in formal magistrate attire.
+    - Isolated Skeleton Cloning via Three.js `SkeletonUtils.clone` ensuring every specialist runs its own independent `AnimationMixer` without bone cross-talk or frozen limbs.
+  - `clip-factory.ts`:
+    - 8 Verified AnimationClips authored with quaternion and vector keyframes at 30 FPS:
+      1. `idle_breathing`: Seated ambient respiratory cycle with chest elevation (3.0s).
+      2. `attentive_listening`: Upright posture with engaged nod toward presiding dais (4.0s).
+      3. `seated_reading`: Head lowered 22° examining desk folio, left hand holding document (4.5s).
+      4. `checking_source`: Forward lean 12°, right hand tracing statutory provisions (3.5s).
+      5. `note_taking`: Rhythmic writing motions with stylus pen prop on desk notepad (4.0s).
+      6. `discussion_gesture`: 18° torso turn, open-palm explanatory gesture with table peers (3.0s).
+      7. `packet_handoff`: Chair reaching forward offering sealed packet to courier (3.5s).
+      8. `messenger_locomotion`: Balanced upright walking stride along transit path (1.2s).
+  - Physical Clearance & Contact Calibration:
+    - Seated root position: `y = 0.44m` (firm contact with chair cushion top at `y = 0.46m`).
+    - Hand / Prop alignment: Tabletop resting plane at `y = 0.52m`.
+    - Foot placement: Flat on floor dais at `y = 0.02m`.
+    - Table clearance: Torso lean bounded to max 15°, preventing table penetration (`tableRadius = 1.8m`, `y = 0.42m`).
+  - `SingleCharacterValidator.tsx` (First Step Validation Rig):
+    - Standalone target laptop validation view testing one seated professional character (A03 / A10) and one Messenger courier.
+    - Live activity switcher across all 8 clips, chair/analyst toggle, and live clearance check metrics.
+  - Animated R3F Components & Full Chamber Integration:
+    - `AnimatedSpecialist.tsx`: Per-character AnimationMixer with 0.35s cubic cross-fading and prop synchronization.
+    - `AnimatedMessenger.tsx`: Humanoid courier with dynamic orientation and locomotion along floor transit tracks.
+    - `TribunalChamber.tsx`: Populates all 5 round tables with 50 animated human specialists and animated courier.
+    - `ChamberOverlayControls.tsx`: Live activity dropdown and "Validate Rig" navigation button.
+  - Phone Independence:
+    - Confirmed 0 Three.js or character assets in `apps/phone-web` (~180 kB production bundle).
+  - Automated 10-Point Verification Suite (`apps/worker/src/tests/phase17-verification.ts`).
+- **Verification Gate**: All 10 tests passed; licensed asset manifest and actual clip inventory exist; 50 characters stable and readable; required activities functional.
+
+---
+
 # PART 3: VERIFICATION SUMMARY TABLE
 
 | Phase | Title | Tests | Status | Verification Gate Summary |
@@ -414,7 +461,8 @@ Phases 13–16 ──► Bench Packets & Messenger, Q&A, PDF Reports, 3D Chamber
 | **14** | Document-Grounded Questions Across Case | 10 | **PASSED** | Cross-document differences cited; no hallucinations |
 | **15** | Readable Reports & Private Downloads | 9 | **PASSED** | Versioned PDF renders legibly; private links enforced |
 | **16** | Laptop-Only 3D Chamber & 2D Fallback | 10 | **PASSED** | All 50 seats selectable; camera presets; HTML parity |
+| **17** | Animated Human Characters & Activity Clips | 10 | **PASSED** | Asset manifest, 8 clips, 50 characters, clearance checks |
 
 ---
 
-*Chronicle finalized and verified through Phase 16.*
+*Chronicle finalized and verified through Phase 17.*

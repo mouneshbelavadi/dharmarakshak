@@ -1,7 +1,8 @@
 import React from 'react';
 import { CameraPreset, CAMERA_PRESETS } from './chamber-types.js';
 import { BENCHES, BenchId, ALL_SPECIALISTS, getSpecialistById, SpecialistDefinition } from '@dharmaraksha/tribunal-definitions';
-import { Camera, RotateCcw, Compass, Activity, Eye, Shield, Crown, FileText, CheckCircle2 } from 'lucide-react';
+import { CharacterActivity } from './character/types.js';
+import { Camera, RotateCcw, Compass, Activity, Eye, Shield, Crown, FileText, CheckCircle2, User, Play } from 'lucide-react';
 
 interface ChamberOverlayControlsProps {
   currentPreset: CameraPreset;
@@ -15,6 +16,9 @@ interface ChamberOverlayControlsProps {
   onSelectBench: (benchId: BenchId) => void;
   onSelectSpecialist: (specialistId: string) => void;
   theme: 'split' | 'light' | 'dark';
+  currentActivity?: CharacterActivity;
+  onSelectActivity?: (activity: CharacterActivity) => void;
+  onOpenValidator?: () => void;
 }
 
 export const ChamberOverlayControls: React.FC<ChamberOverlayControlsProps> = ({
@@ -28,7 +32,10 @@ export const ChamberOverlayControls: React.FC<ChamberOverlayControlsProps> = ({
   selectedSpecialistId,
   onSelectBench,
   onSelectSpecialist,
-  theme
+  theme,
+  currentActivity = 'idle_breathing',
+  onSelectActivity,
+  onOpenValidator
 }) => {
   const isLight = theme === 'light';
   const panelBg = isLight ? 'rgba(255, 255, 255, 0.92)' : 'rgba(15, 23, 42, 0.90)';
@@ -42,9 +49,19 @@ export const ChamberOverlayControls: React.FC<ChamberOverlayControlsProps> = ({
 
   const currentBench = BENCHES.find((b) => b.id === selectedBenchId) || BENCHES[0];
 
+  const activities: Array<{ id: CharacterActivity; label: string }> = [
+    { id: 'idle_breathing', label: 'Idle Breathing' },
+    { id: 'attentive_listening', label: 'Attentive Listening' },
+    { id: 'seated_reading', label: 'Seated Reading' },
+    { id: 'checking_source', label: 'Checking Source' },
+    { id: 'note_taking', label: 'Note Taking' },
+    { id: 'discussion_gesture', label: 'Discussion Gesture' },
+    { id: 'packet_handoff', label: 'Packet Handoff' }
+  ];
+
   return (
     <>
-      {/* Top Bar: Camera Presets & Mode Toggles */}
+      {/* Top Bar: Camera Presets, Character Activities & Mode Toggles */}
       <div style={{
         position: 'absolute',
         top: '12px',
@@ -177,14 +194,53 @@ export const ChamberOverlayControls: React.FC<ChamberOverlayControlsProps> = ({
           </button>
         </div>
 
-        {/* View Mode & Accessibility Toggles */}
+        {/* View Mode, Activity & Accessibility Controls */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           gap: '6px',
           pointerEvents: 'auto'
         }}>
-          {/* Quick Specialist HTML Selector (Satisfies HTML parity gate for all 50 seats) */}
+          {/* Animated Activity Clip Selector */}
+          {onSelectActivity && (
+            <div style={{
+              background: panelBg,
+              backdropFilter: 'blur(10px)',
+              border: `1px solid ${borderColor}`,
+              borderRadius: '8px',
+              padding: '3px 8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <label htmlFor="html-activity-select" style={{ fontSize: '11px', fontWeight: 600, color: textMuted, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                <Play style={{ width: 10, height: 10, color: '#38bdf8' }} />
+                <span>Activity:</span>
+              </label>
+              <select
+                id="html-activity-select"
+                value={currentActivity}
+                onChange={(e) => onSelectActivity(e.target.value as CharacterActivity)}
+                style={{
+                  fontSize: '11px',
+                  padding: '3px 6px',
+                  borderRadius: '4px',
+                  background: isLight ? '#ffffff' : '#1e293b',
+                  color: textPrimary,
+                  border: `1px solid ${borderColor}`,
+                  cursor: 'pointer'
+                }}
+              >
+                {activities.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Quick Specialist HTML Selector */}
           <div style={{
             background: panelBg,
             backdropFilter: 'blur(10px)',
@@ -234,6 +290,31 @@ export const ChamberOverlayControls: React.FC<ChamberOverlayControlsProps> = ({
               ))}
             </select>
           </div>
+
+          {/* Single Character Rig Validator Button */}
+          {onOpenValidator && (
+            <button
+              onClick={onOpenValidator}
+              style={{
+                padding: '5px 10px',
+                fontSize: '11px',
+                fontWeight: 700,
+                borderRadius: '8px',
+                background: '#ca8a04',
+                color: '#ffffff',
+                border: '1px solid #eab308',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                backdropFilter: 'blur(10px)'
+              }}
+              title="First Validation: Test individual seated character and messenger rigs"
+            >
+              <User style={{ width: 12, height: 12 }} />
+              <span>Validate Rig</span>
+            </button>
+          )}
 
           {/* Reduced Motion Toggle */}
           <button
@@ -344,7 +425,7 @@ export const ChamberOverlayControls: React.FC<ChamberOverlayControlsProps> = ({
               {currentBench.workingPrinciple}
             </div>
             <div style={{ fontSize: '10px', color: '#38bdf8', marginTop: '4px' }}>
-              Click any of the 10 specialist seats around the table to inspect individual contract and findings
+              Click any of the 10 animated specialist characters around the table to inspect individual contract and findings
             </div>
           </div>
         )}

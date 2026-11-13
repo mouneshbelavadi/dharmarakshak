@@ -1,0 +1,161 @@
+{
+  "schemaVersion": "1.0.0",
+  "project": "DHARMARAKSHA",
+  "phase": "17 — Animated Human Characters and Activity Clips",
+  "createdAt": "2026-11-13T15:15:00Z",
+  "characterArtDirection": {
+    "style": "Stylized Realistic Civic Professionals",
+    "tone": "Dignified, professional, restrained Indian legal tribunal",
+    "palette": "Paper-and-Ink design system: warm ivory, obsidian ink, civic indigo, subdued brass",
+    "silhouette": "Formal modern business attire, blazers, Nehru collars, dignified hair, distinct chair robes"
+  },
+  "evaluatedLibraries": [
+    {
+      "name": "Microsoft Rocketbox Avatar Library",
+      "repository": "https://github.com/microsoft/Microsoft-Rocketbox",
+      "license": "MIT License / Microsoft Research License",
+      "attribution": "Microsoft Corporation & Rocketbox Studios (2020). Released for research, avatars, and real-time embodiment.",
+      "rigFormat": "Biped Skeleton (58-65 bones), Mixamo-compatible joint orientations",
+      "polyCountPerModel": "5,000 - 15,000 triangles",
+      "clipInventory": [
+        "Standing Idle Breathing",
+        "Walking Stride (Forward / Turn)",
+        "Conversation Hand Gestures",
+        "Seated Basic Pose"
+      ],
+      "evaluationNotes": "High-fidelity professional clothing (suits, office wear). Unoptimized FBX models require conversion to GLB and texture atlasing. Lacks legal desk-specific clips (verbatim document reading, statutory checking, folio handoff) which must be custom-authored."
+    },
+    {
+      "name": "KayKit Character & Animation Pack",
+      "author": "Kay Lousberg",
+      "website": "https://kaykit.nl",
+      "license": "CC0 1.0 Universal (Public Domain)",
+      "attribution": "KayKit Character Animations (2023)",
+      "rigFormat": "Standardized Low-Poly Humanoid Rig (20 bones)",
+      "polyCountPerModel": "1,500 - 3,000 triangles",
+      "clipInventory": [
+        "Idle",
+        "Walk",
+        "Run",
+        "Wave",
+        "Point"
+      ],
+      "evaluationNotes": "Useful for low-poly animation timing and locomotion validation, but fantasy adventurer clothing (armor, boots, cloaks) clashes with the required tribunal courtroom setting. Used as a structural reference for locomotion bone timing."
+    }
+  ],
+  "unifiedRigSpecification": {
+    "rigName": "DharmarakshaStandardBiped_v1",
+    "totalBones": 20,
+    "boneHierarchy": [
+      "Root",
+      "Hips",
+      "Spine",
+      "Chest",
+      "Neck",
+      "Head",
+      "LeftShoulder",
+      "LeftArm",
+      "LeftForeArm",
+      "LeftHand",
+      "RightShoulder",
+      "RightArm",
+      "RightForeArm",
+      "RightHand",
+      "LeftUpLeg",
+      "LeftLeg",
+      "LeftFoot",
+      "RightUpLeg",
+      "RightLeg",
+      "RightFoot"
+    ],
+    "targetPolyCountPerCharacter": "3,200 - 4,800 triangles",
+    "drawCallOptimization": "Shared geometry templates, instanced materials, SkeletonUtils.clone per instance"
+  },
+  "activityClipInventory": [
+    {
+      "clipName": "idle_breathing",
+      "activityType": "Seated Ambient Idle",
+      "durationSeconds": 3.0,
+      "fps": 30,
+      "loopMode": "LoopRepeat",
+      "description": "Natural seated respiratory cycle with subtle chest elevation (0.015m) and slight micro-adjustments of head gaze.",
+      "provenance": "Custom authored for Dharmaraksha tribunal desk geometry"
+    },
+    {
+      "clipName": "attentive_listening",
+      "activityType": "Seated Deliberation",
+      "durationSeconds": 4.0,
+      "fps": 30,
+      "loopMode": "LoopRepeat",
+      "description": "Upright attentive posture, head oriented slightly toward speaker/presiding dais with occasional subtle nodding assent.",
+      "provenance": "Custom authored for tribunal active listening"
+    },
+    {
+      "clipName": "seated_reading",
+      "activityType": "Evidence Review",
+      "durationSeconds": 4.5,
+      "fps": 30,
+      "loopMode": "LoopRepeat",
+      "description": "Head lowered 22 degrees focusing on desk folio, left hand steadying document, subtle scanning head motions.",
+      "provenance": "Custom authored for verbatim document examination"
+    },
+    {
+      "clipName": "checking_source",
+      "activityType": "Statutory Cross-Checking",
+      "durationSeconds": 3.5,
+      "fps": 30,
+      "loopMode": "LoopRepeat",
+      "description": "Torso leaning forward 12 degrees, right hand pointing to statutory provision, head tilted in analytical scrutiny.",
+      "provenance": "Custom authored for Indian legal corpus verification"
+    },
+    {
+      "clipName": "note_taking",
+      "activityType": "Finding Annotation",
+      "durationSeconds": 4.0,
+      "fps": 30,
+      "loopMode": "LoopRepeat",
+      "description": "Right hand holding stylus/pen with rhythmic writing motions on desk notepad; left arm resting on table edge.",
+      "provenance": "Custom authored with synchronized pen prop constraint"
+    },
+    {
+      "clipName": "discussion_gesture",
+      "activityType": "Bench Deliberation",
+      "durationSeconds": 3.0,
+      "fps": 30,
+      "loopMode": "LoopRepeat",
+      "description": "Seated torso turning slightly toward neighbor specialist, open-palm explanatory gesture, head engagement.",
+      "provenance": "Retargeted from Rocketbox conversation gesture with seated posture correction"
+    },
+    {
+      "clipName": "packet_handoff",
+      "activityType": "Milestone Delivery",
+      "durationSeconds": 3.5,
+      "fps": 30,
+      "loopMode": "LoopOnce",
+      "description": "Bench Chair rising slightly and reaching forward with both hands extending consolidated folio packet to courier.",
+      "provenance": "Custom authored for bench chair milestone handoff"
+    },
+    {
+      "clipName": "messenger_locomotion",
+      "activityType": "Courier Transit",
+      "durationSeconds": 1.2,
+      "fps": 30,
+      "loopMode": "LoopRepeat",
+      "description": "Balanced upright walking stride with alternating arm swing, head forward along brass floor transit line.",
+      "provenance": "Retargeted from KayKit biped walk cycle adapted for professional courier"
+    }
+  ],
+  "castSpecification": {
+    "totalCharacters": 52,
+    "specialists": 50,
+    "messengerCourier": 1,
+    "presidingReviewer": 1,
+    "baseArchetypes": [
+      { "id": "male_professional", "name": "Professional Advocate (Male)", "baseSuit": "#1e293b", "tie": "#38bdf8" },
+      { "id": "female_professional", "name": "Professional Advocate (Female)", "baseSuit": "#0f172a", "blazer": "#64748b" },
+      { "id": "chair_senior", "name": "Bench Chair Senior Adjudicator", "baseSuit": "#1e1e24", "goldTrim": "#fbbf24", "crest": true },
+      { "id": "messenger_courier", "name": "Deterministic Courier", "baseSuit": "#0369a1", "vest": "#38bdf8", "satchel": true }
+    ],
+    "appearanceGenerationRule": "Deterministic generation using specialist.id (A01-E10) seed: bench color accents, distinct hair cuts, skin tones, and chair insignia."
+  }
+}
