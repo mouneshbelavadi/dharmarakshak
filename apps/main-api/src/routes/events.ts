@@ -41,3 +41,4 @@ eventsRouter.get('/cases/:id/events', requireCaseAccess, (req: Request, res: Res
   // Register for ongoing real-time event streaming
   eventLedger.registerSubscriber(caseId, res);
 });
+

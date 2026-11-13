@@ -9,7 +9,7 @@ This ledger tracks the status, primary deliverables, and verification gates acro
 | **03** | **Combined Light & Dark Visual System** | Semantic tokens for surfaces, text, borders, status, 3D lighting; "Paper and Ink" design specification; laptop split/light/dark themes; phone responsive styling; reviewable layouts for Review Chamber, Document Comparison, Grounded Q&A, Report Preview, and 2D Accessible fallback. | Layouts show light/dark surfaces together; all 3 laptop themes supported; all essential tasks usable outside 3D. | **COMPLETED** |
 | **04** | **Accessible Laptop Shell & Small Phone UI** | Complete React/TypeScript shells; Review, Documents, Reports, Connections, and role-gated Device destinations on laptop; full 7-screen phone visitor journey; persistent "Stop speaking" action; safe-area insets; zero Three.js in phone bundle. | Phone bundle inspection confirms 0 3D payload; full navigation accessible; fixtures clearly labeled. | **COMPLETED** |
 | **05** | **Central Persistence, Auth & Real Events** | PostgreSQL integration (`pg`), private disk storage (`StorageService`), device key exchange & instant revocation, session authorization middleware (`requireCaseAccess`), monotonic event ledger (`EventLedgerService`), SSE replay streaming, separate state machines, idempotency deduplication (`IdempotencyService`), and automated 6-point verification suite. | Real data survives restart; duplicate submission remains 1 logical operation; unauthorized cross-case access denied. | **COMPLETED** |
-| **06** | **Issued-Card RFID Sessions** | RFID card enrollment, tap-to-start, debounced reader events, session binding, return/reassignment cleanup. | Duplicate taps create no duplicate cases; card reissue purges former visitor data. | Pending |
+| **06** | **Issued-Card RFID Sessions** | Operator card enrollment, issuance, tap-to-start, 3000ms debounce window, session binding, return card cleanup (phone token purge), clean-slate reissue with zero data carryover, revocation, physical vs simulated reader adapter (`HardwareRfidReaderAdapter`, `SimulatedRfidReaderAdapter`), automated 8-point verification suite. | Duplicate taps create no duplicate session; reissue reveals none of previous visitor's data; hardware verification accurately distinguished from simulation. | **COMPLETED** |
 | **07** | **UNO Q Gateway & Capture Adapter** | ARM64 Linux gateway for UNO Q, UVC camera control, bounded spool buffer, phone camera fallback, SHA-256 upload. | Page reaches central storage; no provider secrets on board; survives disconnect. | Pending |
 | **08** | **HTTPS Connection & Pairing (ngrok / LAN)** | Secure HTTPS via ngrok/local LAN, operator pairing code flow, kiosk phone session binding, CSRF/origin checks. | Phone captures and receives events over HTTPS; unpaired devices rejected. | Pending |
 | **09** | **Multiple-Document Intake & OCR** | Multi-document grouping (agreement + receipt + annexure), page reordering, Indian script OCR, immutable case snapshot. | Page order intact; verbatim citations link to document/page; stale findings rejected. | Pending |
@@ -31,19 +31,35 @@ This ledger tracks the status, primary deliverables, and verification gates acro
 
 ---
 
-## Phase 05 Execution Summary
+## Phase 06 Execution Summary
 
 - **Deliverables**:
-  - `DatabaseService` (`apps/main-api/src/db/client.ts`): PostgreSQL connection pooling, DDL migration runner executing `packages/shared-contracts/src/schema/schema.sql`, and resilient local authority fallback.
-  - `StorageService` (`apps/main-api/src/storage/storage-service.ts`): File bounds enforcement (20MB limit), SHA-256 cryptographic digest calculation & verification, directory traversal sanitization, and structured `UploadAcknowledgment`.
-  - `AuthService` & Security Middleware (`apps/main-api/src/auth/auth-service.ts`): Scoped hardware device key exchange (`X-Dharmaraksha-Device-Key`), dynamic device key revocation, session token management, and `requireCaseAccess` middleware enforcing strict cross-case isolation.
-  - `EventLedgerService` (`apps/main-api/src/events/event-ledger.ts`): Strictly monotonic event cursor tracking, atomic state-and-event persistence eliminating unsynchronized dual writes, and real-time SSE broadcasting (`GET /api/v1/cases/:id/events`) with historical catch-up replay (`afterCursor`).
-  - `IdempotencyService` (`apps/main-api/src/idempotency/idempotency-service.ts`): SHA-256 request body hashing and deduplication cache guaranteeing duplicate submissions remain 1 logical operation.
-  - `CaseStateMachine` (`apps/main-api/src/state-machines/case-state-machine.ts`): Finite state transitions across intake, analysis, review, cancellation, and re-opening.
-  - Programmatic Test Harness (`apps/main-api/src/tests/phase05-verification.ts`): Automated 6-point verification suite verifying persistence across simulated restarts, idempotency, 403 cross-case access blocking, event replay, cancellation transitions, and device key revocation.
+  - `IRfidReaderAdapter`, `SimulatedRfidReaderAdapter`, `HardwareRfidReaderAdapter` (`packages/shared-contracts/src/rfid.ts` and `apps/uno-gateway/src/rfid/rfid-adapter.ts`): Pluggable hardware adapter architecture. Accurately distinguishes physical reader validation (`/dev/ttyACM0` via Linux USB or microcontroller bridge) from software simulation mock (`isSimulated: true`). Hardware adapter strictly rejects simulated card fabrication attempts.
+  - `RfidSessionService` (`apps/main-api/src/services/rfid-session-service.ts`):
+    - Full card lifecycle state machine: `unassigned_inventory` -> `issued_to_visitor` -> `active_session` -> `returned_cleared` -> `revoked_lost`.
+    - Operator enrollment (`enrollCard`) and issuance (`issueCard`) with configurable ticket expiration.
+    - Tap resolution (`handleTapEvent`) with strict 3,000ms debouncing: repeated taps within the window return the active session with `debounced: true` and never spawn duplicate sessions or cases.
+    - Return card protocol (`returnCard`): marks assignment returned, reverts card state to `returned_cleared`, and **instantly purges all visitor session tokens** from `AuthService`.
+    - Reissuance guarantee (`issueCard` on returned card): generates a completely new isolated `sessionId` and `caseId` with zero documents, zero questions, and zero findings carried over from the prior visitor.
+    - Rejection enforcement: unknown cards (`404 UNKNOWN_CARD`), expired card tickets (`403 CARD_EXPIRED`), revoked cards (`403 CARD_REVOKED`), and unassigned cards (`400 CARD_NOT_ISSUED`).
+    - Session ticket guarantee: A card UID alone only ever grants a `visitor` role ticket and can never confer operator or administrative privileges.
+  - Gateway RFID Routes (`apps/uno-gateway/src/routes/rfid.ts`):
+    - `GET /api/v1/rfid/reader-status`: Exposes hardware status and verification mode.
+    - `GET /api/v1/rfid/latest-tap`: Kiosk phone polling endpoint.
+    - `POST /api/v1/rfid/simulate-tap`: Verified software simulation mock forwarder.
+    - `POST /api/v1/rfid/tap-event`: Hardware reader event ingestion and Main API forwarder.
+  - Central RFID Routes (`apps/main-api/src/routes/rfid.ts`):
+    - `POST /api/v1/rfid/tap-event`: Normalized tap handler.
+    - `POST /api/v1/cards/enroll`, `POST /api/v1/cards/issue`, `POST /api/v1/cards/:cardUid/return`, `POST /api/v1/cards/:cardUid/revoke`, `GET /api/v1/cards`, `GET /api/v1/cards/:cardUid`.
+  - Automated 8-Point Verification Suite (`apps/main-api/src/tests/phase06-verification.ts`):
+    1. Unknown RFID card rejection (`404 UNKNOWN_CARD`).
+    2. Revoked card rejection (`403 CARD_REVOKED`).
+    3. Expired card rejection (`403 CARD_EXPIRED`).
+    4. Card enrollment, issuance, and first-tap session activation.
+    5. Debouncing repeated taps within 3,000ms (confirms no duplicate session).
+    6. Return card ends session and revokes phone token access (`401 INVALID_SESSION` on subsequent requests).
+    7. Reissuing card creates a clean slate with 0% data carryover (new Case B has 0 documents, and Visitor B is rejected with `403 CROSS_CASE_ACCESS_DENIED` if attempting to view Case A).
+    8. Hardware verification vs. simulation distinction verified.
 - **Verification Gate**:
-  - All 6 acceptance tests executed and passed (`Exit Code: 0`).
-  - Real data verified surviving process restart.
-  - Duplicate submission verified returning cached result with `_idempotentReplay: true`.
-  - Unauthorized visitor access to other cases verified rejected with `403 CROSS_CASE_ACCESS_DENIED`.
-  - Full monorepo typecheck passed with 0 errors across all 7 workspaces.
+  - All 8 acceptance tests executed and passed cleanly (`Exit Code: 0`).
+  - Monorepo typecheck passed with 0 errors across all 7 workspaces.

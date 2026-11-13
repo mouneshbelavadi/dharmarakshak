@@ -6,6 +6,7 @@ import { documentsRouter } from './routes/documents.js';
 import { eventsRouter } from './routes/events.js';
 import { devicesRouter } from './routes/devices.js';
 import { sessionsRouter } from './routes/sessions.js';
+import { rfidRouter } from './routes/rfid.js';
 
 export function createApp() {
   const app = express();
@@ -27,6 +28,7 @@ export function createApp() {
   app.use('/api/v1', eventsRouter);
   app.use('/api/v1', devicesRouter);
   app.use('/api/v1', sessionsRouter);
+  app.use('/api/v1', rfidRouter);
 
   // Root status endpoint
   app.get('/', (_req, res) => {

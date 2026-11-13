@@ -24,3 +24,4 @@ devicesRouter.post('/devices/:id/revoke', (req: Request, res: Response) => {
   console.log(`[DHARMARAKSHA-Auth] Scoped key for device ${deviceId} REVOKED.`);
   res.json({ success: true, deviceId, status: 'revoked' });
 });
+

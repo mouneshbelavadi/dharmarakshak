@@ -80,6 +80,7 @@ export class AuthService {
   public getSession(sessionToken: string): VisitorSession | null {
     for (const s of this.sessions.values()) {
       if (s.sessionToken === sessionToken) {
+        if (s.status === 'revoked' || s.status === 'expired') return null;
         if (new Date(s.expiresAt) < new Date()) return null;
         return s;
       }
@@ -89,6 +90,38 @@ export class AuthService {
 
   public registerSession(session: VisitorSession): void {
     this.sessions.set(session.sessionId, session);
+  }
+
+  public revokeSession(sessionId: string): boolean {
+    const session = this.sessions.get(sessionId);
+    if (!session) return false;
+    session.status = 'revoked';
+    session.expiresAt = new Date(0).toISOString();
+    return true;
+  }
+
+  public revokeSessionsForCard(cardUid: string): number {
+    let count = 0;
+    for (const s of this.sessions.values()) {
+      if (s.cardUid.toUpperCase() === cardUid.toUpperCase()) {
+        s.status = 'revoked';
+        s.expiresAt = new Date(0).toISOString();
+        count++;
+      }
+    }
+    return count;
+  }
+
+  public completeSession(sessionId: string): boolean {
+    const session = this.sessions.get(sessionId);
+    if (!session) return false;
+    session.status = 'completed';
+    session.expiresAt = new Date(0).toISOString();
+    return true;
+  }
+
+  public getAllSessions(): VisitorSession[] {
+    return Array.from(this.sessions.values());
   }
 }
 

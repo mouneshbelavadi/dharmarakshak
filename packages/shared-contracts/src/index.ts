@@ -12,3 +12,4 @@ export * from './delivery.js';
 export * from './bench-packet.js';
 export * from './api-events.js';
 export * from './design-tokens.js';
+export * from './rfid.js';
