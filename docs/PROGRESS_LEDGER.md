@@ -11,7 +11,7 @@ This ledger tracks the status, primary deliverables, and verification gates acro
 | **05** | **Central Persistence, Auth & Real Events** | PostgreSQL integration (`pg`), private disk storage (`StorageService`), device key exchange & instant revocation, session authorization middleware (`requireCaseAccess`), monotonic event ledger (`EventLedgerService`), SSE replay streaming, separate state machines, idempotency deduplication (`IdempotencyService`), and automated 6-point verification suite. | Real data survives restart; duplicate submission remains 1 logical operation; unauthorized cross-case access denied. | **COMPLETED** |
 | **06** | **Issued-Card RFID Sessions** | Operator card enrollment, issuance, tap-to-start, 3000ms debounce window, session binding, return card cleanup (phone token purge), clean-slate reissue with zero data carryover, revocation, physical vs simulated reader adapter (`HardwareRfidReaderAdapter`, `SimulatedRfidReaderAdapter`), automated 8-point verification suite. | Duplicate taps create no duplicate session; reissue reveals none of previous visitor's data; hardware verification accurately distinguished from simulation. | **COMPLETED** |
 | **07** | **UNO Q Gateway & Capture Adapter** | ARM64 Linux gateway for UNO Q, UVC document camera adapter, rate-limited mobile viewfinder preview (`640x480`), bounded disk spool (`SpoolService`, 20 captures / 50MB max), disk-pressure thresholding, durable server acknowledgment, cryptographic SHA-256 pre-hash verification, interruption recovery with stable page identities, explicit phone-camera fallback, supervised systemd service, hardware dependency specification, zero secret leakage. | A real or explicitly simulated page reaches central case once; no provider secret or long-lived device key reaches phone; capture survives a recoverable interruption. | **COMPLETED** |
-| **08** | **HTTPS Connection & Pairing (ngrok / LAN)** | Secure HTTPS via ngrok/local LAN, operator pairing code flow, kiosk phone session binding, CSRF/origin checks. | Phone captures and receives events over HTTPS; unpaired devices rejected. | Pending |
+| **08** | **HTTPS Connection & Pairing (ngrok / LAN)** | Strict CORS allowlist; `TunnelSupervisor`; `PairingService` with single-use codes; HttpOnly/Secure/SameSite cookie exchange; CSRF/origin middleware; `/api/v1/connectivity` separating tunnel from main-API failures; ngrok ARM64 config; phone pairing flow with concurrent-takeover prevention; card-return pairing revocation; 10-test verification suite. | Phone can capture and receive status over HTTPS; unpaired browser is denied; tunnel and main-API failures reported separately. | **COMPLETED** |
 | **09** | **Multiple-Document Intake & OCR** | Multi-document grouping (agreement + receipt + annexure), page reordering, Indian script OCR, immutable case snapshot. | Page order intact; verbatim citations link to document/page; stale findings rejected. | Pending |
 | **10** | **Source Retrieval & Evidence Provenance** | Case-restricted document index, lexical/semantic retrieval, curated Indian statute corpus, exact citation anchors. | Citations point to verified sections/paragraphs; missing law acknowledged. | Pending |
 | **11** | **Bench A: Document & Evidence (10 Specialists)** | Specialists A01–A10, extraction validation, date/amount normalization, contradiction detection, Chair A10 packet. | Bench A returns structured BenchPacket with verbatim excerpts and line coordinates. | Pending |
@@ -58,3 +58,42 @@ This ledger tracks the status, primary deliverables, and verification gates acro
 - **Verification Gate**:
   - All 6 acceptance tests executed and passed cleanly (`Exit Code: 0`).
   - Monorepo typecheck passed with 0 errors across all 7 workspaces.
+
+---
+
+## Phase 08 Execution Summary
+
+- **Deliverables**:
+  - `TunnelSupervisor` (`apps/uno-gateway/src/services/tunnel-service.ts`): Manages ngrok / LAN HTTPS / mock-tunnel modes. Tracks tunnel URL and status, notifies listeners on endpoint change, provides `getConnectivityStatus()` that strictly separates tunnel health from main-API heartbeat health (gate requirement).
+  - `PairingService` (`apps/uno-gateway/src/services/pairing-service.ts`): Operator-generated single-use pairing codes (format `DK-XXXXXX`, 10-min expiry by default). Generates ephemeral QR URL with no device key or provider credential embedded. `consumeCode()` marks code used *before* returning the pairing record (replay-safe). Prevents concurrent phone takeover — a second phone cannot claim an active card's session. `revokeAllPairingsForCard()` severs all browser access when a card is returned or reissued.
+  - `security-middleware.ts` (`apps/uno-gateway/src/middleware/security-middleware.ts`): Three middleware functions:
+    - `requirePairedPhone` — validates `dhr_pair` HttpOnly cookie, returns `401 UNPAIRED_BROWSER` on failure.
+    - `csrfOriginCheck` — validates `Origin` header against tunnel public URL and optional LAN IP, returns `403 ORIGIN_MISMATCH` for unknown origins.
+    - `requireOperatorKey` — validates `DHARMARAKSHA-Device-Key` header for operator-only endpoints; key never echoed in responses.
+  - Pairing routes (`apps/uno-gateway/src/routes/pairing.ts`):
+    - `GET /api/v1/pair/status` — Safe: pairing summary, tunnel mode, no secrets.
+    - `GET /api/v1/connectivity` — Separated `tunnel.status` / `mainApi.status` (gate criterion).
+    - `POST /api/v1/pair/generate` — Operator-only: one-time code + QR payload.
+    - `POST /api/v1/pair/redeem` — Phone consumes code; sets HttpOnly Secure SameSite=Strict cookie; returns `redirectTo: '/kiosk/'` to strip code from URL bar.
+    - `POST /api/v1/pair/revoke` — Operator-only: revoke by pairingId or entire card.
+  - Updated `gateway.ts`: strict CORS allowlist (tunnel URL + LAN fallback + `EXTRA_ALLOWED_ORIGINS` for tests), `trust proxy 1`, `cookie-parser`, pairing routes mounted before CSRF middleware, CSRF/origin applied to all further API calls, `requirePairedPhone` on RFID and capture routes, global JSON error handler converting CORS rejections to `403 ORIGIN_MISMATCH`.
+  - `deploy/uno-q/ngrok.yml`: ARM64-compatible ngrok agent config. `web_addr: false` (no inspection UI), `inspect: false` on the tunnel, authtoken from env variable only. Documents what is and is not exposed through the tunnel.
+  - `.env.example`: Phase 08 variables — `TUNNEL_MODE`, `PUBLIC_HTTPS_URL`, `DEVICE_ID`, `PAIRING_CODE_LIFETIME_MINUTES`, `PHONE_SESSION_LIFETIME_HOURS`, `ALLOWED_LAPTOP_LAN_IP`, `LAN_HTTPS_CERT_PATH`, `LAN_HTTPS_KEY_PATH`, `EXTRA_ALLOWED_ORIGINS`.
+  - `cookie-parser@^1.4.6` and `@types/cookie-parser@^1.4.7` added to uno-gateway dependencies.
+  - Automated 10-test verification suite (`apps/uno-gateway/src/tests/phase08-verification.ts`):
+    1. Pairing code generation — operator key required; code is non-empty; QR has no secrets.
+    2. Code consumption — phone redeems; HttpOnly Secure SameSite=Strict cookie set; token not in body.
+    3. Code replay rejected — `403 CODE_ALREADY_USED`.
+    4. Expired/unknown code rejected — `404 CODE_NOT_FOUND` or `403 CODE_EXPIRED`.
+    5. Unpaired browser denied on RFID and capture routes — `401 UNPAIRED_BROWSER`.
+    6. Paired phone accesses protected routes — session accepted.
+    7. Second phone takeover blocked — `409 SESSION_ALREADY_BOUND`.
+    8. Card return revokes phone access — `401 UNPAIRED_BROWSER` after revoke.
+    9. Tunnel vs main-API failure separation — `tunnel.status` and `mainApi.status` are independent.
+    10. No secrets in phone-facing responses — `/pair/status`, `/health`, `/connectivity`, `/` all clean.
+    11. Origin/CSRF check — wrong Origin → `403 ORIGIN_MISMATCH`; no Origin (server-to-server) → allowed.
+
+- **Verification Gate**:
+  - All 20 acceptance assertions across 10 tests executed and passed (`Exit Code: 0`).
+  - Monorepo typecheck passed with 0 errors across all 7 workspaces (`npm run typecheck --workspaces`).
+  - Full monorepo build clean (`npm run build --workspace=@dharmaraksha/shared-contracts`, `--workspace=@dharmaraksha/uno-gateway`).

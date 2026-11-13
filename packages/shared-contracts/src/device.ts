@@ -28,6 +28,40 @@ export interface PairedPhone {
   isActive: boolean;
 }
 
+export interface OneTimePairingCode {
+  code: string; // e.g. "DK-8492"
+  kioskId: string;
+  expiresAt: string;
+  isUsed: boolean;
+  qrPayload: string; // Ephemeral pairing URL without permanent secrets
+}
+
+export interface TunnelStatus {
+  mode: 'ngrok' | 'lan_https' | 'mock_tunnel';
+  status: 'connected' | 'disconnected' | 'reconnecting' | 'error';
+  publicHttpsUrl?: string;
+  expectedOrigin?: string;
+  lastCheckedAt: string;
+  errorMessage?: string;
+}
+
+export interface KioskConnectivityStatus {
+  kioskId: string;
+  tunnel: TunnelStatus;
+  mainApi: {
+    status: 'connected' | 'disconnected' | 'unreachable';
+    url: string;
+    lastHeartbeatAt?: string;
+    errorMessage?: string;
+  };
+  pairing: {
+    activePairingsCount: number;
+    isCurrentlyBound: boolean;
+    activePairingId?: string;
+  };
+  overallReady: boolean;
+}
+
 export interface ScopedDeviceAuthToken {
   tokenType: 'DHARMARAKSHA_SCOPED_DEVICE_KEY';
   deviceId: string;

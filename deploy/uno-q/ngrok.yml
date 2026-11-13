@@ -1,0 +1,93 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# DHARMARAKSHA — ngrok (NROC) agent configuration
+# Deploy location: UNO Q board at /etc/dharmaraksha/ngrok.yml
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# Architecture:
+#   Phone browser → ngrok HTTPS tunnel → UNO Q gateway (port 5000)
+#   UNO Q gateway → main API (laptop, configured via MAIN_API_URL env var)
+#
+# The tunnel into UNO Q does NOT automatically reach the laptop.
+# The laptop main API has its own independently configured route.
+#
+# Download (ARM64 Linux, Raspberry Pi / Arduino UNO Q Linux MPU):
+#   https://ngrok.com/download  → select "Linux" → "arm64"
+#   Current stable: ngrok 3.x  (verify ARM64 binary with: ngrok version)
+#
+# DO NOT use the amd64 binary on the UNO Q board.
+# DO NOT start ngrok with the authtoken embedded in this file.
+#   Store the authtoken in /etc/dharmaraksha/uno-gateway.env:
+#     NGROK_AUTHTOKEN=your_authtoken_here
+#   Then load before starting: source /etc/dharmaraksha/uno-gateway.env
+#
+# ─────────────────────────────────────────────────────────────────────────────
+
+version: "3"
+
+agent:
+  # Authtoken is read from the NGROK_AUTHTOKEN environment variable.
+  # Never hard-code it in this file; never commit it to version control.
+  authtoken: ${NGROK_AUTHTOKEN}
+
+  # The ngrok web inspection UI is DISABLED.
+  # It must NEVER be reachable from the phone or the internet.
+  # This prevents inspection of live pairing codes, session cookies,
+  # or RFID event payloads.
+  web_addr: false
+
+tunnels:
+  dharmaraksha-kiosk:
+    proto: http          # ngrok wraps in HTTPS at the edge automatically
+    addr: 5000           # UNO Q gateway port (visitor gateway only)
+    inspect: false       # Disable HTTP inspection UI for this tunnel
+
+    # Optional: bind a stable subdomain (requires ngrok paid plan)
+    # Uncomment and set your reserved domain:
+    # domain: your-kiosk.ngrok-free.app
+
+    # Optional: restrict access to known phone browser IPs
+    # (useful if the kiosk is permanently installed)
+    # ip_restrictions:
+    #   allow_cidrs:
+    #     - 0.0.0.0/0
+
+# ─────────────────────────────────────────────────────────────────────────────
+# What is exposed by this tunnel:
+#   /                       — gateway root (safe status)
+#   /api/v1/health          — health check
+#   /api/v1/readiness       — readiness
+#   /api/v1/connectivity    — separated tunnel+main-API status
+#   /api/v1/pair/status     — pairing status (safe)
+#   /api/v1/pair/redeem     — phone pairing code redemption
+#   /api/v1/rfid/*          — RFID status (requires pairing cookie)
+#   /api/v1/capture/*       — capture and spool (requires pairing cookie)
+#   /kiosk/*                — compiled phone UI static assets
+#
+# What is NEVER exposed through this tunnel:
+#   - Main API (laptop) endpoints
+#   - PostgreSQL database
+#   - Camera hardware control internals
+#   - ngrok inspection dashboard
+#   - Development server (hot-reload, source maps)
+#   - Maintenance tools or SSH
+#   - DHARMARAKSHA_DEVICE_API_KEY value
+#   - NGROK_AUTHTOKEN value
+#   - Any provider API credentials
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Starting ngrok as a supervised service on UNO Q:
+#
+#   # First-time setup (run once):
+#   ngrok config add-authtoken $NGROK_AUTHTOKEN
+#   # Or supply inline:
+#   NGROK_AUTHTOKEN=xxx ngrok start dharmaraksha-kiosk --config /etc/dharmaraksha/ngrok.yml
+#
+#   # Systemd service (recommended):
+#   # Place in /etc/systemd/system/dharmaraksha-ngrok.service
+#   # See deploy/uno-q/systemd/dharmaraksha-ngrok.service for the unit file.
+#
+# When ngrok reconnects with a new URL (free plan), call the gateway's
+# setTunnelEndpoint() API or restart the gateway process to update CORS.
+# With a reserved domain (paid plan) the URL is stable across restarts.
+# ─────────────────────────────────────────────────────────────────────────────
