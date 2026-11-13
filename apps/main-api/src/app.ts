@@ -2,28 +2,40 @@ import express from 'express';
 import cors from 'cors';
 import { healthRouter } from './routes/health.js';
 import { casesRouter } from './routes/cases.js';
+import { documentsRouter } from './routes/documents.js';
+import { eventsRouter } from './routes/events.js';
+import { devicesRouter } from './routes/devices.js';
 import { sessionsRouter } from './routes/sessions.js';
 
 export function createApp() {
   const app = express();
 
-  app.use(cors());
-  app.use(express.json());
+  // Strict CORS: allow explicit local origins (laptop web and phone web)
+  app.use(
+    cors({
+      origin: ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001'],
+      credentials: true
+    })
+  );
 
-  // Mount API endpoints
+  app.use(express.json({ limit: '25mb' })); // Support page upload payloads
+
+  // Mount API endpoints under /api/v1
   app.use('/api/v1', healthRouter);
   app.use('/api/v1', casesRouter);
+  app.use('/api/v1', documentsRouter);
+  app.use('/api/v1', eventsRouter);
+  app.use('/api/v1', devicesRouter);
   app.use('/api/v1', sessionsRouter);
 
-  // Root endpoint
+  // Root status endpoint
   app.get('/', (_req, res) => {
     res.json({
       name: 'DHARMARAKSHA Main API',
       status: 'operational',
-      documentation: '/api/v1/health'
+      health: '/api/v1/health'
     });
   });
 
   return app;
 }
-
