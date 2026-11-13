@@ -1,0 +1,87 @@
+/* DHARMARAKSHA — "Paper and Ink" Design System Tokens */
+
+:root {
+  /* Default: Split Theme Tokens */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Noto Sans Devanagari", "Noto Sans Kannada", "Noto Sans Tamil", sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+
+  /* Paper / Folio Surface (Warm Ivory) */
+  --surface-paper: #fdfbf7;
+  --surface-paper-subtle: #f9f6ef;
+  --surface-paper-border: #e7e0d3;
+  --text-paper-primary: #0f172a;
+  --text-paper-secondary: #475569;
+  --text-paper-muted: #64748b;
+
+  /* Chamber Surface (Ink-Dark) */
+  --surface-chamber: #090d16;
+  --surface-chamber-elevated: #0f172a;
+  --surface-chamber-card: #1e293b;
+  --surface-chamber-border: #334155;
+  --text-chamber-primary: #f8fafc;
+  --text-chamber-secondary: #cbd5e1;
+  --text-chamber-muted: #94a3b8;
+
+  /* Accents */
+  --accent-indigo: #3b82f6;
+  --accent-indigo-hover: #1d4ed8;
+  --accent-brass: #ca8a04;
+  --accent-brass-glow: rgba(202, 138, 4, 0.4);
+
+  /* Status Colors */
+  --status-idle: #94a3b8;
+  --status-active: #3b82f6;
+  --status-completed: #10b981;
+  --status-warning: #f59e0b;
+  --status-critical: #f43f5e;
+
+  /* Focus & Selections */
+  --focus-ring: 0 0 0 2px #ffffff, 0 0 0 4px #2563eb;
+  --touch-target-min: 44px;
+}
+
+/* Light Theme (Full Ivory Document Mode) */
+[data-theme="light"] {
+  --surface-app: #f9f6ef;
+  --surface-paper: #fdfbf7;
+  --surface-chamber: #f2ece0;
+  --surface-chamber-elevated: #ffffff;
+  --surface-chamber-card: #ffffff;
+  --surface-chamber-border: #e7e0d3;
+  --text-chamber-primary: #0f172a;
+  --text-chamber-secondary: #334155;
+  --text-chamber-muted: #64748b;
+  --accent-indigo: #1d4ed8;
+  --accent-brass: #b45309;
+}
+
+/* Dark Theme (Full Ink-Dark Chamber Mode) */
+[data-theme="dark"] {
+  --surface-app: #070a10;
+  --surface-paper: #101626;
+  --surface-paper-subtle: #161f36;
+  --surface-paper-border: #1e293b;
+  --text-paper-primary: #f8fafc;
+  --text-paper-secondary: #cbd5e1;
+  --text-paper-muted: #94a3b8;
+  --surface-chamber: #070a10;
+  --surface-chamber-elevated: #0b0f19;
+  --surface-chamber-card: #161f36;
+  --surface-chamber-border: #1e293b;
+  --text-chamber-primary: #f8fafc;
+  --text-chamber-secondary: #cbd5e1;
+  --text-chamber-muted: #94a3b8;
+  --accent-indigo: #60a5fa;
+  --accent-brass: #f59e0b;
+}
+
+/* Reduced Motion Accessible Fallback */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+

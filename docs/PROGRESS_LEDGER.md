@@ -6,7 +6,7 @@ This ledger tracks the status, primary deliverables, and verification gates acro
 | :--- | :--- | :--- | :--- | :--- |
 | **01** | **Repository & Skeleton Architecture** | Monorepo layout, npm workspaces, TypeScript configurations, pinned dependencies, minimal laptop/phone views, health endpoints. | Zero-error typecheck and build across packages and apps. | **COMPLETED** |
 | **02** | **Architecture, Ownership & Shared Contracts** | Final 3-tier topology spec, PostgreSQL authority DDL (19 tables), SQLite spool DDL, versioned domain contracts (device, card, session, case, document, snapshot, analysis, QA, findings, report, events, delivery), operational protocols. | 100% typecheck pass; zero ambiguous database owner, device secret, or camera source. | **COMPLETED** |
-| **03** | **Combined Light & Dark Visual System** | Semantic tokens for surfaces, text, borders, status; Paper & Ink design specification; laptop split/light/dark themes; phone responsive styling; shadcn/Radix layout patterns. | Layouts show light/dark surfaces together; all essential tasks usable outside 3D. | Pending |
+| **03** | **Combined Light & Dark Visual System** | Semantic tokens for surfaces, text, borders, status, 3D lighting; "Paper and Ink" design specification; laptop split/light/dark themes; phone responsive styling; reviewable layouts for Review Chamber, Document Comparison, Grounded Q&A, Report Preview, and 2D Accessible fallback. | Layouts show light/dark surfaces together; all 3 laptop themes supported; all essential tasks usable outside 3D. | **COMPLETED** |
 | **04** | **Accessible Laptop Shell & Small Phone UI** | Full React/TypeScript shells; Review, Documents, Reports, Connections on laptop; 7-screen phone task workflow; zero Three.js in phone bundle. | Phone bundle inspection confirms 0 3D payload; full navigation accessible. | Pending |
 | **05** | **Central Persistence, Auth & Real Events** | PostgreSQL integration, private disk storage, device enrollment, session permissions, SSE event subscription, reconnect/replay. | Real data survives server restart; monotonic cursor replay verified. | Pending |
 | **06** | **Issued-Card RFID Sessions** | RFID card enrollment, tap-to-start, debounced reader events, session binding, return/reassignment cleanup. | Duplicate taps create no duplicate cases; card reissue purges former visitor data. | Pending |
@@ -31,15 +31,21 @@ This ledger tracks the status, primary deliverables, and verification gates acro
 
 ---
 
-## Phase 02 Execution Summary
+## Phase 03 Execution Summary
 
 - **Deliverables**:
-  - `docs/TOPOLOGY_AND_DEPLOYMENT_SPEC.md`: Exhaustive 3-tier architecture, network hops, media lifecycle, hosted-backend alternative, and strict UNO Q computational boundaries.
-  - `docs/OPERATIONAL_PROTOCOLS.md`: Upload acknowledgment, idempotency, cancellation, monotonic event replay, stale-version rejection, and role-based permissions.
-  - `docs/DATABASE_AND_STORAGE_SPEC.md`: PostgreSQL central authority, fresh install DDL, backup/rollback strategies, private directory structure, and UNO Q SQLite spooling.
-  - `packages/shared-contracts/src/schema/schema.sql`: 19 core PostgreSQL tables with constraints and indexes.
-  - `apps/uno-gateway/src/db/spool-schema.sql`: Lightweight SQLite spool table DDL.
-  - `packages/shared-contracts/src/`: Versioned TypeScript records for `device.ts`, `card-assignment.ts`, `session.ts`, `case.ts`, `document.ts`, `analysis-run.ts`, `qa.ts`, `findings.ts`, `report.ts`, `events.ts`, and `delivery.ts`.
+  - `docs/VISUAL_DESIGN_SPECIFICATION.md`: Comprehensive visual specification for "Paper and Ink", semantic design tokens, WCAG 2.1 AA accessibility rules, Indian script fallbacks, 3D chamber spatial layout, asset & motion direction, and reviewable screen layouts.
+  - `packages/shared-contracts/src/design-tokens.ts`: Pinned color palettes, semantic tokens, typography scales, and 3D lighting profiles.
+  - `apps/laptop-web/src/styles/theme.css` & `apps/phone-web/src/styles/theme.css`: CSS custom properties supporting `split`, `light`, and `dark` themes, large 44px+ touch targets, and `@media (prefers-reduced-motion: reduce)`.
+  - Reviewable Frontend Layouts in `apps/laptop-web`:
+    - `DocumentComparison.tsx`: Side-by-side clause comparison and discrepancy breakdown.
+    - `GroundedQAPanel.tsx`: Grounded chat bubbles, verbatim citation chips, and Sarvam TTS audio trigger.
+    - `ReportPreview.tsx`: Preliminary review package, statutory disclaimer, and multi-channel dispatch buttons.
+    - `PresentationHeader.tsx`: Theme toggling (`Split`, `Light`, `Dark`) and tab navigation (`Chamber & Folio`, `Comparison`, `Q&A`, `Report`, `2D Accessible`).
+    - `App.tsx`: Dynamic tab router and theme attribute binder.
+  - Kiosk Companion in `apps/phone-web`: Mobile theme toggler, high-contrast touch targets, and Indian language typography.
 - **Verification Gate**:
-  - Complete monorepo typecheck passed with 0 errors across all 7 packages and apps.
-  - Zero ambiguous database owner, device-secret location, document version, event identity, or camera source remains in the contract.
+  - Layout showcases both light (ivory folio) and dark (ink chamber) surfaces together in the default Split theme.
+  - All three laptop themes (`split`, `light`, `dark`) are fully selectable and functional.
+  - Every essential task (case intake, clause comparison, discrepancy inspection, Q&A, and report delivery) is completely functional and legible without WebGL or 3D rendering in 2D Accessible mode.
+  - Monorepo typecheck passed with 0 errors across all 7 workspaces.

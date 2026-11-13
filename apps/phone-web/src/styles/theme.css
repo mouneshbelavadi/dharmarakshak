@@ -1,0 +1,45 @@
+/* DHARMARAKSHA — Kiosk Companion Phone Design Tokens */
+
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Noto Sans Devanagari", "Noto Sans Kannada", "Noto Sans Tamil", sans-serif;
+  
+  /* High-Contrast Light Mode (Default Kiosk Screen) */
+  --phone-bg: #f8fafc;
+  --phone-surface-card: #ffffff;
+  --phone-border: #e2e8f0;
+  --phone-text-primary: #0f172a;
+  --phone-text-secondary: #334155;
+  --phone-text-muted: #64748b;
+  
+  --phone-accent-blue: #0284c7;
+  --phone-accent-indigo: #4f46e5;
+  --phone-accent-green: #059669;
+  --phone-accent-red: #dc2626;
+
+  /* Strict Mobile Touch Accessibility */
+  --min-touch-target: 44px;
+  --touch-button-radius: 12px;
+}
+
+[data-theme="dark"] {
+  --phone-bg: #0b0f19;
+  --phone-surface-card: #161f36;
+  --phone-border: #1e293b;
+  --phone-text-primary: #f8fafc;
+  --phone-text-secondary: #cbd5e1;
+  --phone-text-muted: #94a3b8;
+  
+  --phone-accent-blue: #38bdf8;
+  --phone-accent-indigo: #818cf8;
+  --phone-accent-green: #10b981;
+  --phone-accent-red: #ef4444;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+

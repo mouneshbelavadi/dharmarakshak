@@ -1,9 +1,13 @@
 import { useState } from 'react';
-import { PresentationHeader } from './components/PresentationHeader.js';
+import { PresentationHeader, LaptopActiveTab } from './components/PresentationHeader.js';
 import { TribunalChamber } from './components/TribunalChamber.js';
 import { DocumentWorkspace } from './components/DocumentWorkspace.js';
+import { DocumentComparison } from './components/DocumentComparison.js';
+import { GroundedQAPanel } from './components/GroundedQAPanel.js';
+import { ReportPreview } from './components/ReportPreview.js';
 import { BenchInspector } from './components/BenchInspector.js';
-import { CaseRecord } from '@dharmaraksha/shared-contracts';
+import { CaseRecord, LaptopTheme } from '@dharmaraksha/shared-contracts';
+import './styles/theme.css';
 
 const sampleCase: CaseRecord = {
   caseId: 'case-demo-001',
@@ -57,44 +61,82 @@ const sampleCase: CaseRecord = {
 };
 
 export function App() {
-  const [viewMode, setViewMode] = useState<'chamber_3d' | 'split' | 'accessible_2d'>('split');
+  const [activeTab, setActiveTab] = useState<LaptopActiveTab>('chamber_folio');
+  const [theme, setTheme] = useState<LaptopTheme>('split');
   const [isPresentationMode, setIsPresentationMode] = useState<boolean>(true);
   const [selectedBenchId, setSelectedBenchId] = useState<'A' | 'B' | 'C' | 'D' | 'E'>('A');
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: '100vw', height: '100vh', overflow: 'hidden' }}>
+    <div
+      data-theme={theme}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100vw',
+        height: '100vh',
+        overflow: 'hidden',
+        background: theme === 'light' ? '#f9f6ef' : '#070a10',
+        color: theme === 'light' ? '#0f172a' : '#f8fafc'
+      }}
+    >
       <PresentationHeader
         currentCase={sampleCase}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        theme={theme}
+        onThemeChange={setTheme}
         isPresentationMode={isPresentationMode}
         onTogglePresentationMode={() => setIsPresentationMode(!isPresentationMode)}
       />
 
       <div style={{ display: 'flex', flex: 1, height: 'calc(100vh - 56px)', overflow: 'hidden' }}>
-        {/* Left Side: Document Workspace or Full View depending on mode */}
-        {(viewMode === 'split' || viewMode === 'accessible_2d') && (
-          <div style={{
-            flex: viewMode === 'accessible_2d' ? 1 : '0 0 50%',
-            height: '100%',
-            overflow: 'hidden',
-            borderRight: '1px solid #334155'
-          }}>
+        {/* Dynamic Center Workspaces based on Active Tab */}
+        <div style={{ flex: 1, height: '100%', overflow: 'hidden', display: 'flex' }}>
+          {/* Tab 1: Chamber & Folio (Default Split View) */}
+          {activeTab === 'chamber_folio' && (
+            <>
+              {/* Left Side: Warm Ivory Folio Workspace */}
+              <div style={{
+                flex: '0 0 50%',
+                height: '100%',
+                overflow: 'hidden',
+                borderRight: theme === 'light' ? '1px solid #e7e0d3' : '1px solid #1e293b'
+              }}>
+                <DocumentWorkspace currentCase={sampleCase} />
+              </div>
+
+              {/* Right Side: Ink-Dark 3D Chamber Canvas */}
+              <div style={{ flex: '0 0 50%', height: '100%', position: 'relative' }}>
+                <TribunalChamber
+                  selectedBenchId={selectedBenchId}
+                  onSelectBench={setSelectedBenchId}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Tab 2: Document Comparison (Side-by-side Folios) */}
+          {activeTab === 'comparison' && (
+            <DocumentComparison currentCase={sampleCase} />
+          )}
+
+          {/* Tab 3: Grounded Conversational Q&A */}
+          {activeTab === 'qa' && (
+            <GroundedQAPanel currentCase={sampleCase} />
+          )}
+
+          {/* Tab 4: Referenced Report Preview & Delivery */}
+          {activeTab === 'report' && (
+            <ReportPreview currentCase={sampleCase} />
+          )}
+
+          {/* Tab 5: Accessible 2D Fallback View (Full Folio without WebGL) */}
+          {activeTab === 'accessible_2d' && (
             <DocumentWorkspace currentCase={sampleCase} />
-          </div>
-        )}
+          )}
+        </div>
 
-        {/* 3D Chamber Workspace (confining Three.js & R3F strictly to laptop app) */}
-        {(viewMode === 'chamber_3d' || viewMode === 'split') && (
-          <div style={{ flex: 1, height: '100%', position: 'relative' }}>
-            <TribunalChamber
-              selectedBenchId={selectedBenchId}
-              onSelectBench={setSelectedBenchId}
-            />
-          </div>
-        )}
-
-        {/* Bench & Specialist Inspector Panel */}
+        {/* Bench & Specialist Inspector Sidebar (Always Available) */}
         <BenchInspector
           selectedBenchId={selectedBenchId}
           onSelectBench={setSelectedBenchId}

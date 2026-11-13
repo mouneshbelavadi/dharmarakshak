@@ -1,33 +1,41 @@
 import React from 'react';
-import { Shield, Eye, Layout, Layers, Terminal } from 'lucide-react';
-import { CaseRecord } from '@dharmaraksha/shared-contracts';
+import { Shield, Eye, Layers, GitCompare, MessageSquare, FileText, Sun, Moon, Split, Terminal } from 'lucide-react';
+import { CaseRecord, LaptopTheme } from '@dharmaraksha/shared-contracts';
+
+export type LaptopActiveTab = 'chamber_folio' | 'comparison' | 'qa' | 'report' | 'accessible_2d';
 
 interface PresentationHeaderProps {
   currentCase: CaseRecord;
-  viewMode: 'chamber_3d' | 'split' | 'accessible_2d';
-  onViewModeChange: (mode: 'chamber_3d' | 'split' | 'accessible_2d') => void;
+  activeTab: LaptopActiveTab;
+  onTabChange: (tab: LaptopActiveTab) => void;
+  theme: LaptopTheme;
+  onThemeChange: (theme: LaptopTheme) => void;
   isPresentationMode: boolean;
   onTogglePresentationMode: () => void;
 }
 
 export const PresentationHeader: React.FC<PresentationHeaderProps> = ({
   currentCase,
-  viewMode,
-  onViewModeChange,
+  activeTab,
+  onTabChange,
+  theme,
+  onThemeChange,
   isPresentationMode,
   onTogglePresentationMode
 }) => {
   return (
     <header style={{
       height: '56px',
-      backgroundColor: '#0f172a',
-      borderBottom: '1px solid #1e293b',
+      backgroundColor: theme === 'light' ? '#ffffff' : '#0f172a',
+      borderBottom: theme === 'light' ? '1px solid #e7e0d3' : '1px solid #1e293b',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: '0 20px',
-      color: '#ffffff'
+      color: theme === 'light' ? '#0f172a' : '#ffffff',
+      transition: 'background 0.2s, color 0.2s'
     }}>
+      {/* Brand & Case Info */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <div style={{
           width: 32,
@@ -52,70 +60,181 @@ export const PresentationHeader: React.FC<PresentationHeaderProps> = ({
               borderRadius: '4px',
               fontWeight: 600
             }}>
-              3D TRIBUNAL
+              PAPER & INK
             </span>
           </div>
           <div style={{ fontSize: '11px', color: '#64748b' }}>
-            Case: {currentCase.title} ({currentCase.caseId})
+            {currentCase.title} (v{currentCase.currentSnapshotVersion})
           </div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div style={{ display: 'flex', background: '#1e293b', borderRadius: '8px', padding: '3px', gap: '2px' }}>
+      {/* Main Tab Navigation */}
+      <div style={{
+        display: 'flex',
+        background: theme === 'light' ? '#f1f5f9' : '#1e293b',
+        borderRadius: '8px',
+        padding: '3px',
+        gap: '2px'
+      }}>
+        <button
+          onClick={() => onTabChange('chamber_folio')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '5px 10px',
+            borderRadius: '6px',
+            fontSize: '12px',
+            fontWeight: 500,
+            background: activeTab === 'chamber_folio' ? '#3b82f6' : 'transparent',
+            color: activeTab === 'chamber_folio' ? '#ffffff' : '#64748b'
+          }}
+        >
+          <Layers style={{ width: 14, height: 14 }} />
+          Chamber & Folio
+        </button>
+
+        <button
+          onClick={() => onTabChange('comparison')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '5px 10px',
+            borderRadius: '6px',
+            fontSize: '12px',
+            fontWeight: 500,
+            background: activeTab === 'comparison' ? '#3b82f6' : 'transparent',
+            color: activeTab === 'comparison' ? '#ffffff' : '#64748b'
+          }}
+        >
+          <GitCompare style={{ width: 14, height: 14 }} />
+          Comparison
+        </button>
+
+        <button
+          onClick={() => onTabChange('qa')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '5px 10px',
+            borderRadius: '6px',
+            fontSize: '12px',
+            fontWeight: 500,
+            background: activeTab === 'qa' ? '#3b82f6' : 'transparent',
+            color: activeTab === 'qa' ? '#ffffff' : '#64748b'
+          }}
+        >
+          <MessageSquare style={{ width: 14, height: 14 }} />
+          Grounded Q&A
+        </button>
+
+        <button
+          onClick={() => onTabChange('report')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '5px 10px',
+            borderRadius: '6px',
+            fontSize: '12px',
+            fontWeight: 500,
+            background: activeTab === 'report' ? '#3b82f6' : 'transparent',
+            color: activeTab === 'report' ? '#ffffff' : '#64748b'
+          }}
+        >
+          <FileText style={{ width: 14, height: 14 }} />
+          Report
+        </button>
+
+        <button
+          onClick={() => onTabChange('accessible_2d')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '5px 10px',
+            borderRadius: '6px',
+            fontSize: '12px',
+            fontWeight: 500,
+            background: activeTab === 'accessible_2d' ? '#3b82f6' : 'transparent',
+            color: activeTab === 'accessible_2d' ? '#ffffff' : '#64748b'
+          }}
+        >
+          <Terminal style={{ width: 14, height: 14 }} />
+          2D Accessible
+        </button>
+      </div>
+
+      {/* Theme Switcher & Evaluator View Button */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        {/* Theme Toggles */}
+        <div style={{
+          display: 'flex',
+          background: theme === 'light' ? '#f1f5f9' : '#1e293b',
+          borderRadius: '8px',
+          padding: '2px',
+          gap: '2px'
+        }}>
           <button
-            onClick={() => onViewModeChange('chamber_3d')}
+            onClick={() => onThemeChange('split')}
+            title="Split Mode (Ivory Folio + Dark Chamber)"
             style={{
+              padding: '5px 8px',
+              borderRadius: '6px',
+              fontSize: '11px',
+              fontWeight: 600,
+              background: theme === 'split' ? '#3b82f6' : 'transparent',
+              color: theme === 'split' ? '#ffffff' : '#64748b',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
-              padding: '5px 10px',
-              borderRadius: '6px',
-              fontSize: '12px',
-              fontWeight: 500,
-              background: viewMode === 'chamber_3d' ? '#3b82f6' : 'transparent',
-              color: viewMode === 'chamber_3d' ? '#ffffff' : '#94a3b8'
+              gap: '4px'
             }}
           >
-            <Layers style={{ width: 14, height: 14 }} />
-            3D Chamber
+            <Split style={{ width: 12, height: 12 }} />
+            Split
           </button>
           <button
-            onClick={() => onViewModeChange('split')}
+            onClick={() => onThemeChange('light')}
+            title="Full Light Mode (Warm Ivory)"
             style={{
+              padding: '5px 8px',
+              borderRadius: '6px',
+              fontSize: '11px',
+              fontWeight: 600,
+              background: theme === 'light' ? '#0f172a' : 'transparent',
+              color: theme === 'light' ? '#ffffff' : '#64748b',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
-              padding: '5px 10px',
-              borderRadius: '6px',
-              fontSize: '12px',
-              fontWeight: 500,
-              background: viewMode === 'split' ? '#3b82f6' : 'transparent',
-              color: viewMode === 'split' ? '#ffffff' : '#94a3b8'
+              gap: '4px'
             }}
           >
-            <Layout style={{ width: 14, height: 14 }} />
-            Split Workspace
+            <Sun style={{ width: 12, height: 12 }} />
+            Light
           </button>
           <button
-            onClick={() => onViewModeChange('accessible_2d')}
+            onClick={() => onThemeChange('dark')}
+            title="Full Dark Mode (Ink Chamber)"
             style={{
+              padding: '5px 8px',
+              borderRadius: '6px',
+              fontSize: '11px',
+              fontWeight: 600,
+              background: theme === 'dark' ? '#3b82f6' : 'transparent',
+              color: theme === 'dark' ? '#ffffff' : '#64748b',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
-              padding: '5px 10px',
-              borderRadius: '6px',
-              fontSize: '12px',
-              fontWeight: 500,
-              background: viewMode === 'accessible_2d' ? '#3b82f6' : 'transparent',
-              color: viewMode === 'accessible_2d' ? '#ffffff' : '#94a3b8'
+              gap: '4px'
             }}
           >
-            <Terminal style={{ width: 14, height: 14 }} />
-            2D Fallback
+            <Moon style={{ width: 12, height: 12 }} />
+            Dark
           </button>
         </div>
 
+        {/* Evaluator Presentation Mode */}
         <button
           onClick={onTogglePresentationMode}
           style={{
@@ -131,7 +250,7 @@ export const PresentationHeader: React.FC<PresentationHeaderProps> = ({
           }}
         >
           <Eye style={{ width: 14, height: 14 }} />
-          {isPresentationMode ? 'Evaluator View (Active)' : 'Evaluator View'}
+          {isPresentationMode ? 'Evaluator (Active)' : 'Evaluator'}
         </button>
       </div>
     </header>
