@@ -1,4 +1,4 @@
-import { CaseDocument } from './document.js';
+import { CaseDocument, ImmutableDocumentVersion } from './document.js';
 import { BenchPacket } from './bench-packet.js';
 import { IndianLanguage } from './session.js';
 
@@ -12,7 +12,32 @@ export type CaseStatus =
   | 'presiding_synthesis'
   | 'review_complete'
   | 'partial_review_with_gaps'
+  | 'cancelled'
   | 'failed';
+
+export interface CaseOwnership {
+  caseId: string;
+  creatorSessionId: string;
+  creatorRole: 'visitor' | 'operator' | 'admin';
+  assignedCardUid?: string;
+  sourceType: 'kiosk' | 'laptop_direct';
+  authorizedSessionIds: string[];
+}
+
+export interface CaseDocumentSnapshot {
+  snapshotId: string;
+  caseId: string;
+  snapshotVersion: number; // Monotonically increments whenever documents or pages change
+  documentManifest: Array<{
+    documentId: string;
+    versionNumber: number;
+    pageCount: number;
+    manifestHash: string;
+  }>;
+  totalPageCount: number;
+  combinedFingerprint: string;
+  frozenAt: string;
+}
 
 export interface PresidingReviewSummary {
   executiveSummary: string;
@@ -29,10 +54,11 @@ export interface PresidingReviewSummary {
 
 export interface CaseRecord {
   caseId: string;
-  sessionId?: string;
-  sourceType: 'kiosk' | 'laptop_direct';
+  ownership: CaseOwnership;
   title: string;
   status: CaseStatus;
+  currentSnapshotVersion: number;
+  activeSnapshot?: CaseDocumentSnapshot;
   documents: CaseDocument[];
   benchPackets: Partial<Record<'A' | 'B' | 'C' | 'D' | 'E', BenchPacket>>;
   presidingSummary?: PresidingReviewSummary;
@@ -40,5 +66,6 @@ export interface CaseRecord {
   createdAt: string;
   updatedAt: string;
   completedAt?: string;
+  cancelledAt?: string;
+  cancellationReason?: string;
 }
-

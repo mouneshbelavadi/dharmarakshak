@@ -35,7 +35,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({ currentCas
           {currentCase.title}
         </h1>
         <div style={{ fontSize: '13px', color: '#64748b' }}>
-          Source: {currentCase.sourceType === 'kiosk' ? 'Physical Kiosk Overhead Capture' : 'Laptop Direct Ingestion'} • Status: {currentCase.status}
+          Source: {currentCase.ownership.sourceType === 'kiosk' ? 'Physical Kiosk Overhead Capture' : 'Laptop Direct Ingestion'} • Status: {currentCase.status}
         </div>
       </div>
 

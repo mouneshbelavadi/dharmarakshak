@@ -9,10 +9,12 @@ const placeholderSessions: Map<string, VisitorSession> = new Map([
     {
       sessionId: 'sess-001',
       cardUid: 'E280689420000000',
+      role: 'visitor',
       status: 'active' as SessionStatus,
       preferredLanguage: 'kn',
       consentGiven: true,
       activeCaseId: 'case-demo-001',
+      sessionToken: 'tok-ephemeral-visitor-001',
       createdAt: new Date().toISOString(),
       lastActiveAt: new Date().toISOString(),
       expiresAt: new Date(Date.now() + 3600000).toISOString()
@@ -31,4 +33,3 @@ sessionsRouter.get('/sessions/:id', (req: Request, res: Response) => {
   }
   res.json(session);
 });
-

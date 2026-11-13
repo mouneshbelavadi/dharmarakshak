@@ -11,6 +11,8 @@ export type IndianLanguage =
   | 'pa' // Punjabi
   | 'or'; // Odia
 
+export type UserRole = 'visitor' | 'operator' | 'admin' | 'evaluator';
+
 export type SessionStatus =
   | 'card_issued'
   | 'tapped_awaiting_consent'
@@ -34,12 +36,23 @@ export interface CardInfo {
 export interface VisitorSession {
   sessionId: string;
   cardUid: string;
+  pairingId?: string; // Bound kiosk phone
+  role: UserRole;
   status: SessionStatus;
   preferredLanguage: IndianLanguage;
   consentGiven: boolean;
+  consentTimestamp?: string;
   activeCaseId?: string;
   createdAt: string;
   lastActiveAt: string;
   expiresAt: string;
+  sessionToken: string; // Short-lived session token (ephemeral browser cookie/header)
 }
 
+export interface SessionAuthContext {
+  sessionId: string;
+  role: UserRole;
+  cardUid?: string;
+  caseId?: string;
+  expiresAt: string;
+}

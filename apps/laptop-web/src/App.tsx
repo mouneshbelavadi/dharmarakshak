@@ -7,9 +7,16 @@ import { CaseRecord } from '@dharmaraksha/shared-contracts';
 
 const sampleCase: CaseRecord = {
   caseId: 'case-demo-001',
+  ownership: {
+    caseId: 'case-demo-001',
+    creatorSessionId: 'sess-001',
+    creatorRole: 'visitor',
+    sourceType: 'laptop_direct',
+    authorizedSessionIds: ['sess-001']
+  },
   title: 'Commercial Lease Agreement & Security Deposit Review',
-  sourceType: 'laptop_direct',
   status: 'review_complete',
+  currentSnapshotVersion: 1,
   preferredLanguage: 'en',
   documents: [],
   benchPackets: {},
