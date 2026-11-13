@@ -6,6 +6,9 @@ export * from './execution/specialist-executor.js';
 export * from './review/bench-chair-consolidator.js';
 export * from './review/messenger-service.js';
 export * from './review/presiding-reviewer-service.js';
+export * from './report/font-resolver.js';
+export * from './report/report-renderer.js';
+export * from './report/report-worker.js';
 import { BackgroundOrchestrator } from './orchestrator.js';
 
 dotenv.config();

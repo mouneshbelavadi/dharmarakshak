@@ -9,6 +9,7 @@ import { sessionsRouter } from './routes/sessions.js';
 import { rfidRouter } from './routes/rfid.js';
 import { retrievalRouter } from './routes/retrieval.js';
 import { qaRouter } from './routes/qa.js';
+import { reportsRouter } from './routes/reports.js';
 
 export function createApp() {
   const app = express();
@@ -33,6 +34,7 @@ export function createApp() {
   app.use('/api/v1', rfidRouter);
   app.use('/api/v1', retrievalRouter);
   app.use('/api/v1', qaRouter);
+  app.use('/api/v1', reportsRouter);
 
   // Root status endpoint
   app.get('/', (_req, res) => {

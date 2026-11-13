@@ -16,7 +16,9 @@
   "dependencies": {
     "@dharmaraksha/shared-contracts": "*",
     "@dharmaraksha/tribunal-definitions": "*",
-    "dotenv": "^16.4.5"
+    "@types/pdfkit": "^0.17.7",
+    "dotenv": "^16.4.5",
+    "pdfkit": "^0.20.2"
   },
   "devDependencies": {
     "@types/node": "^20.12.12",

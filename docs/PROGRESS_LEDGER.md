@@ -18,7 +18,7 @@ This ledger tracks the status, primary deliverables, and verification gates acro
 | **12** | **Durable Routing & Bounded Specialist Execution** | Persisted routing plans across all 50 specialists based on document type, uncertainty, jurisdiction, and questions; Stage progression (Stage 1 Bench A -> Stage 2 B/C -> Stage 3 D -> Stage 4 E); durable worker scheduling with claims, leases, deadlines, and retry budgets; independent first assessment and bounded contradiction round without agent voting; and automated 8-point verification suite. | Work resumes after restart without duplicating accepted findings; failures remain failed or partial; routing follows role eligibility and dependencies rather than arbitrary positional truncation. | **COMPLETED** |
 | **13** | **Bench Packets, Messenger & Presiding Review** | Versioned bench packet consolidation by chairs (A10–E10) with checksums; deterministic Messenger delivery with deduplication and persisted acknowledgments; AI Presiding Reviewer synthesis preserving dissent and gaps; post-synthesis reference grounding validation with publication blocking / partial policies; non-blocking animation milestones; and automated 8-point verification suite. | Duplicate packet delivery has one logical effect; citation failures and dissent survive synthesis; real events support a truthful visible handoff. | **COMPLETED** |
 | **14** | **Document-Grounded Questions Across Case** | Typed questions scoped to one document or all documents in the active snapshot; focused clarification on ambiguous "this agreement"; cross-document comparison and discrepancy calculation; absent information reporting without hallucination; preliminary OCR vs tribunal verified source status labeling; targeted review task assignment without 50-agent restart; multi-tenant session isolation; and stale snapshot version rejection. | Questions about either of two documents and their differences return correct citations; absent information produces no invented answer; stale responses cannot attach to a newer snapshot. | **COMPLETED** |
-| **15** | **Bench E: Verification & Plain Language (10 Specialists)** | Specialists E01–E10, audit trail checking, arithmetic verifier, plain-language translation, Chair E10 packet. | Bench E flags mathematical mismatches and removes unverified assertions. | Pending |
+| **15** | **Readable Reports & Private Downloads** | Versioned PDF generator, document inventory, Indian-script font resolver, non-blocking rendering worker outside HTTP path, readable page breaks, selectable text, source links, concise accessible HTML summary, spoken summary for phone audio, private revocable download authorization, disconnected delivery resilience, and automated 9-point verification suite. | Report contents match the frozen case snapshot, citations resolve, private links enforce access, and text renders legibly in the requested languages. | **COMPLETED** |
 | **16** | **Orchestration Engine & Specialist Task DAG** | Asynchronous worker scheduler, case-to-specialist routing, dependency DAG (Bench A -> B/C -> D -> E), execution bounds. | Full multi-bench execution runs within bounded latency without deadlocks. | Pending |
 | **17** | **Messenger Coordination & Packet Handover** | Inter-bench packet transport, integrity check, transit animation event emission, handoff to Presiding Reviewer. | Packets successfully validated and received at Presiding Reviewer desk. | Pending |
 | **18** | **AI Presiding Reviewer Synthesis** | Gemini-powered synthesis of 5 bench packets, executive summary, preserved disagreements, questions for visitor. | Consolidated PresidingReviewSummary produced with zero hallucinatory claims. | Pending |
@@ -374,5 +374,47 @@ This ledger tracks the status, primary deliverables, and verification gates acro
 - **Verification Gate**:
   - All 10 acceptance tests executed and passed cleanly (`Exit Code: 0`).
   - Phase 11, Phase 12, and Phase 13 verification test suites verified cleanly (`Exit Code: 0`).
+  - Monorepo typecheck passed with 0 errors across all 7 workspaces (`npm run typecheck`).
+  - Monorepo build passed across all 7 workspaces (`npm run build`).
+
+---
+
+## Phase 15 Execution Summary
+
+- **Deliverables**:
+  - `FontResolver` (`apps/worker/src/report/font-resolver.ts`):
+    - Replaces Windows-only font assumptions with cross-platform font resolution (Linux Noto/DejaVu, macOS Arial Unicode, Windows Segoe UI / Arial / Nirmala, and standard PDF fallbacks).
+    - Verified Indian-script character support (Kannada, Devanagari/Hindi, Tamil, Telugu, and Latin).
+  - `ReportRenderer` (`apps/worker/src/report/report-renderer.ts`):
+    - **Versioned PDF Engine**: Generates high-quality A4 PDF documents outside the HTTP request path with readable page breaks, running headers/footers, selectable text streams, and clickable source links.
+    - **Report Contents**: Document inventory (manifest, page counts, pre-hashes), document-set version (`snapshotVersion`), language, reviewed scope, executive summary, material obligations, preserved adversarial dissents (D01 vs D02 under Indian Contract Act Section 74), unresolved questions & missing annexures (e.g. Schedule B), specialist coverage summary (assigned vs skipped roles), and verbatim evidence citations.
+    - **Concise Accessible HTML Results**: `renderReportHtml()` provides responsive semantic HTML with print page-break CSS, selectable text, and clickable anchors, viewable immediately on phones before/without desktop PDF viewers.
+    - **Mandatory Statutory Disclaimer**: Prominently rendered stating the review is preliminary AI assistance and NOT formal legal counsel or advocate opinion.
+  - `ReportWorkerService` (`apps/worker/src/report/report-worker.ts`):
+    - Asynchronous generation decoupled from HTTP request loop.
+    - Generates `SpokenSummaryPayload` for mobile phones (plain-language text designed for Sarvam AI audio playback with bullet points).
+    - Multi-Channel Delivery Dispatch: Handles delivery requests (Telegram, Google Drive, Gmail); disconnected external integrations return graceful `failed_or_unconfigured` without blocking local PDF downloads.
+  - REST Endpoints (`apps/main-api/src/routes/reports.ts`, `apps/main-api/src/app.ts`):
+    - `POST /api/v1/cases/:id/reports/generate`: Trigger asynchronous report generation outside HTTP request path.
+    - `GET /api/v1/cases/:id/reports/status`: Inspect generation status, file size, and SHA-256 hash.
+    - `GET /api/v1/cases/:id/reports/summary`: Concise JSON summary for mobile kiosk view.
+    - `GET /api/v1/cases/:id/reports/html`: Accessible HTML results for instant mobile reading.
+    - `GET /api/v1/cases/:id/reports/spoken-summary`: Plain text for voice playback without desktop PDF viewer.
+    - `GET /api/v1/cases/:id/reports/:reportId/download`: Authorized private streaming download protected by `requireCaseAccess` (card return / session cleanup revokes access).
+    - `POST /api/v1/cases/:id/reports/deliver`: Request delivery via Telegram, Google Drive, or Gmail.
+  - Automated 9-Point Verification Suite (`apps/worker/src/tests/phase15-verification.ts`):
+    1. Cross-platform font resolver eliminating Windows-only dependencies.
+    2. Mixed-script multi-document report generation (English Lease + Kannada Receipt + Devanagari Annexure).
+    3. Partial analysis report with explicit skipped coverage and unverified check warnings.
+    4. Evidence citations resolution to actual frozen case snapshot pages.
+    5. Concise accessible HTML summary generation before full PDF download.
+    6. Phone read/hear spoken text-to-speech payload without requiring desktop PDF viewer.
+    7. Snapshot evolution (v1 -> v2) invalidation and immutable versioned reports.
+    8. Private storage & revocable download authorization (card return revokes access).
+    9. Disconnected external delivery (Telegram/Gmail/Drive) never blocks local report download.
+
+- **Verification Gate**:
+  - All 9 acceptance tests executed and passed cleanly (`Exit Code: 0`).
+  - Phase 14 verification test suite verified cleanly (`Exit Code: 0`).
   - Monorepo typecheck passed with 0 errors across all 7 workspaces (`npm run typecheck`).
   - Monorepo build passed across all 7 workspaces (`npm run build`).
