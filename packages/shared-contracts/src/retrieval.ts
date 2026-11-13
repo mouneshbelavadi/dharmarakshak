@@ -90,3 +90,4 @@ export interface RetrievalResponse {
   searchMethod: 'lexical_bm25' | 'hybrid_semantic';
   retrievalTimestamp: string;
 }
+

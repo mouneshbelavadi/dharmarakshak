@@ -89,3 +89,4 @@ retrievalRouter.get('/retrieval/legal-corpus/:sourceId', (req: Request, res: Res
 
   res.json({ success: true, source });
 });
+

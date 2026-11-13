@@ -170,3 +170,4 @@ const STOP_WORDS = new Set([
 ]);
 
 export const evidenceIndexService = new EvidenceIndexService();
+

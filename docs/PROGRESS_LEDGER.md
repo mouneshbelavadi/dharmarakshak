@@ -14,7 +14,7 @@ This ledger tracks the status, primary deliverables, and verification gates acro
 | **08** | **HTTPS Connection & Pairing (ngrok / LAN)** | Strict CORS allowlist; `TunnelSupervisor`; `PairingService` with single-use codes; HttpOnly/Secure/SameSite cookie exchange; CSRF/origin middleware; `/api/v1/connectivity` separating tunnel from main-API failures; ngrok ARM64 config; phone pairing flow with concurrent-takeover prevention; card-return pairing revocation; 10-test verification suite. | Phone can capture and receive status over HTTPS; unpaired browser is denied; tunnel and main-API failures reported separately. | **COMPLETED** |
 | **09** | **Multiple-Document Intake & OCR** | Multi-document grouping (agreement + receipt + annexure), parent-annexure linkage, page-by-page intake, page reordering, rotation, recapture, Indian script OCR (Kannada, Devanagari, Latin), full text (>1,000 chars without truncation), table & negation detection, uncertainty audit trail & review text correction, duplicate page detection without silent deletion, cross-document discrepancy detection, immutable case-document snapshots (v1 -> v2) with combined fingerprint, stale finding detection, and automated 8-point verification suite. | Document boundaries and page order survive capture/retry; every extracted passage points to its actual document/version/page; changes cannot silently reuse stale findings. | **COMPLETED** |
 | **10** | **Source Retrieval & Evidence Provenance** | Case-restricted evidence indexing (BM25 lexical retrieval), curated Indian statutory corpus (Transfer of Property Act, Contract Act, Rent Acts, Consumer Protection), landmark Supreme Court precedents, location anchors (`doc:...`, `statute:...`, `precedent:...`), missing annexure & uncurated statute limitations, stale/repealed law detection, wrong jurisdiction filtering, and automated 10-point verification suite. | Citations point to verified sections/paragraphs; missing law acknowledged. | **COMPLETED** |
-| **11** | **Bench A: Document & Evidence (10 Specialists)** | Specialists A01–A10, extraction validation, date/amount normalization, contradiction detection, Chair A10 packet. | Bench A returns structured BenchPacket with verbatim excerpts and line coordinates. | Pending |
+| **11** | **Fifty Specialist Identities & Bench Registry** | Complete A01–E10 registry across 5 benches (10 specialists per bench), Chair 10th seat enforcement, Messenger & Presiding Reviewer separation, persistent seat & appearance IDs, role contract validator, multi-role perspective demonstrations (Tenancy, Employment, Citation, Adversarial, Plain Language), unselected role visibility without faked model calls, and automated 8-point verification suite. | Exactly fifty unique analyst IDs exist, ten in each bench; role, seat, finding and prompt identifiers agree without any imported registry or historical data. | **COMPLETED** |
 | **12** | **Bench B: Rights & Obligations (10 Specialists)** | Specialists B01–B10, domain contract analysis (tenancy, employment, sale, debt, consumer), Chair B10 packet. | Bench B accurately maps duties, lock-in clauses, and default remedies. | Pending |
 | **13** | **Bench C: Indian Legal Sources (10 Specialists)** | Specialists C01–C10, statute retrieval, precedent relevance, jurisdiction checking, Citation Verifier C09. | C09 validates act sections and flags unverified citations or state variations. | Pending |
 | **14** | **Bench D: Adversarial Risk (10 Specialists)** | Specialists D01–D10, holder advocate vs counterparty advocate, ambiguity detection, financial penalties, Chair D10 packet. | Bench D highlights one-sided terms and calculates uncapped exposures. | Pending |
@@ -203,5 +203,53 @@ This ledger tracks the status, primary deliverables, and verification gates acro
 
 - **Verification Gate**:
   - All 10 acceptance tests executed and passed cleanly (`Exit Code: 0`).
+  - Monorepo typecheck passed with 0 errors across all 7 workspaces (`npm run typecheck`).
+  - Monorepo build passed across all 7 workspaces (`npm run build`).
+
+---
+
+## Phase 11 Execution Summary
+
+- **Deliverables**:
+  - `TRIBUNAL_BENCHES`, `BENCH_A_SPECIALISTS` through `BENCH_E_SPECIALISTS`, `ALL_SPECIALISTS_MAP` (`packages/tribunal-definitions/src/benches.ts`):
+    - Exactly fifty unique specialist identities (`A01` through `E10`) across 5 benches:
+      - **Bench A (Evidence & Grounding)**: Capture Quality (`A01`), Page Continuity (`A02`), Text Fidelity (`A03`), Language (`A04`), Parties & Capacities (`A05`), Dates & Amounts (`A06`), Clause Structure (`A07`), Document Consistency (`A08`), Sensitive Data (`A09`), Evidence Chair (`A10`).
+      - **Bench B (Obligations & Rights)**: General Contract (`B01`), Employment (`B02`), Tenancy (`B03`), Property Transaction (`B04`), Consumer & Service (`B05`), Small-Business (`B06`), Lending & Security (`B07`), Data & IP (`B08`), Exit & Dispute (`B09`), Obligations Chair (`B10`).
+      - **Bench C (Legal Sources & Precedent)**: Jurisdiction (`C01`), Statute Retrieval (`C02`), State-Law (`C03`), Rules & Notifications (`C04`), Temporal Applicability (`C05`), Precedent Retrieval (`C06`), Precedent Relevance (`C07`), Contrary Authority (`C08`), Citation Verifier (`C09`), Sources Chair (`C10`).
+      - **Bench D (Adversarial & Risk Evaluation)**: Document-Holder Advocate (`D01`), Counterparty Advocate (`D02`), Ambiguity (`D03`), Financial Exposure (`D04`), Deadline & Default (`D05`), Balance & Fairness (`D06`), Evidence-Gap (`D07`), Red-Flag (`D08`), Scenario (`D09`), Risk Chair (`D10`).
+      - **Bench E (Synthesis & Citizen Translation)**: Finding-to-Evidence Auditor (`E01`), Contradiction Resolver (`E02`), Arithmetic & Timeline Verifier (`E03`), Coverage Auditor (`E04`), Plain-Language Editor (`E05`), Multilingual Fidelity (`E06`), Clarification Planner (`E07`), Human-Review Triage (`E08`), Report Privacy (`E09`), Verification Chair (`E10`).
+    - Every specialist defines: `id`, `benchId`, `name`, `role`, `taskObjective`, `eligibility`, `evidenceInputs`, `roleInstructions`, `allowedReadOnlyCapabilities`, `outputContract`, `timeoutMs` (15s–30s bounded), `promptVersion` (`"v1.0.0"`), `seatId` (e.g. `seat-A-01` to `seat-E-10`), and persistent `appearance` (table position index 0–9, 3D desk angle 0°–324°, hex primary/accent colors, deterministic avatar seed).
+    - **10th Seat Rule**: The bench chair occupies `tablePositionIndex: 9` (the 10th seat at the round table), never an extra seat.
+  - Separate Chamber Officials (`CHAMBER_OFFICIALS`):
+    - Deterministic Messenger (`MESSENGER`): Physical packet routing between benches.
+    - AI Presiding Reviewer (`PRESIDING_REVIEWER`): Multi-bench synthesis and executive review.
+    - Strictly separate from the 50 analysts; neither ID appears in the A01–E10 specialist registry.
+  - Multi-Role Perspective Demonstrations (`ROLE_PERSPECTIVE_EXAMPLES` in `packages/tribunal-definitions/src/perspective-examples.ts`):
+    - Concrete real-world demonstrations proving contrasting, specialized analytical viewpoints on identical clauses:
+      - **Tenancy Analyst (`B03`)**: Rent, deposit deduction ceilings, and Section 108(m) wear-and-tear protection.
+      - **Employment Analyst (`B02`)**: Flags post-termination non-compete covenants as void under Section 27, Indian Contract Act.
+      - **Citation Verifier (`C09`)**: Verifies Section 74 and Supreme Court precedent *Fateh Chand v. Balkishan Das* against authentic legal corpus.
+      - **Adversarial Counterparty Advocate (`D02`)**: Defends landlord's commercial rationale, vacancy losses, and liquidated damages.
+      - **Financial Exposure Analyst (`D04`)**: Quantifies worst-case financial liabilities, deposit forfeiture (Rs. 2,50,000), and 18% compounding interest.
+      - **Plain-Language Editor (`E05`)**: Translates punitive legal forfeiture clauses into transparent, citizen-friendly explanations.
+  - `SpecialistContractValidator` (`packages/tribunal-definitions/src/contract-checks.ts`):
+    - `validateTribunalStructure()`: Confirms 5 benches, 10 specialists each, chairs at index 9, and appearance seed persistence.
+    - `validateFindingOutput()`: Strictly enforces specialist output contracts (requires verbatim evidence quotes for analysts, statutory references for C09, severity rankings, etc.).
+    - `validateRoleAssignment()`: Distinguishes eligible domain specialists from unassigned specialists without faking execution.
+  - Unselected Role Partitioning (`filterEligibleSpecialists`):
+    - Documents partition specialists cleanly into `eligibleSpecialists` and `unassignedSpecialists`.
+    - Unselected roles remain visible in the UI/3D chamber as `unassigned` rather than disappearing or triggering fabricated model calls.
+  - Automated 8-Point Verification Suite (`apps/main-api/src/tests/phase11-verification.ts`):
+    1. Exactly 50 unique analyst IDs (`A01`–`E10`), 10 per bench, 0 duplicates.
+    2. Chairs occupy 10th seat at index 9 (`A10`, `B10`, `C10`, `D10`, `E10`).
+    3. Messenger and Presiding Reviewer are strictly separate chamber officials.
+    4. Persistent seat IDs and deterministic visual seeds across all 50 specialists.
+    5. Structural registry validation passes with 0 errors.
+    6. Role perspective demonstrations verify Tenancy, Employment, Citation, Adversarial, and Plain Language roles.
+    7. Output contract enforcement rejects invalid findings lacking verbatim evidence or statutory authority.
+    8. Unselected domain roles (e.g. `B02`, `B07` on a lease) are visible as `unassigned` without manufactured model calls.
+
+- **Verification Gate**:
+  - All 8 acceptance tests executed and passed cleanly (`Exit Code: 0`).
   - Monorepo typecheck passed with 0 errors across all 7 workspaces (`npm run typecheck`).
   - Monorepo build passed across all 7 workspaces (`npm run build`).
