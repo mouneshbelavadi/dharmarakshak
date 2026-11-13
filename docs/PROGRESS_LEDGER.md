@@ -10,7 +10,7 @@ This ledger tracks the status, primary deliverables, and verification gates acro
 | **04** | **Accessible Laptop Shell & Small Phone UI** | Complete React/TypeScript shells; Review, Documents, Reports, Connections, and role-gated Device destinations on laptop; full 7-screen phone visitor journey; persistent "Stop speaking" action; safe-area insets; zero Three.js in phone bundle. | Phone bundle inspection confirms 0 3D payload; full navigation accessible; fixtures clearly labeled. | **COMPLETED** |
 | **05** | **Central Persistence, Auth & Real Events** | PostgreSQL integration (`pg`), private disk storage (`StorageService`), device key exchange & instant revocation, session authorization middleware (`requireCaseAccess`), monotonic event ledger (`EventLedgerService`), SSE replay streaming, separate state machines, idempotency deduplication (`IdempotencyService`), and automated 6-point verification suite. | Real data survives restart; duplicate submission remains 1 logical operation; unauthorized cross-case access denied. | **COMPLETED** |
 | **06** | **Issued-Card RFID Sessions** | Operator card enrollment, issuance, tap-to-start, 3000ms debounce window, session binding, return card cleanup (phone token purge), clean-slate reissue with zero data carryover, revocation, physical vs simulated reader adapter (`HardwareRfidReaderAdapter`, `SimulatedRfidReaderAdapter`), automated 8-point verification suite. | Duplicate taps create no duplicate session; reissue reveals none of previous visitor's data; hardware verification accurately distinguished from simulation. | **COMPLETED** |
-| **07** | **UNO Q Gateway & Capture Adapter** | ARM64 Linux gateway for UNO Q, UVC camera control, bounded spool buffer, phone camera fallback, SHA-256 upload. | Page reaches central storage; no provider secrets on board; survives disconnect. | Pending |
+| **07** | **UNO Q Gateway & Capture Adapter** | ARM64 Linux gateway for UNO Q, UVC document camera adapter, rate-limited mobile viewfinder preview (`640x480`), bounded disk spool (`SpoolService`, 20 captures / 50MB max), disk-pressure thresholding, durable server acknowledgment, cryptographic SHA-256 pre-hash verification, interruption recovery with stable page identities, explicit phone-camera fallback, supervised systemd service, hardware dependency specification, zero secret leakage. | A real or explicitly simulated page reaches central case once; no provider secret or long-lived device key reaches phone; capture survives a recoverable interruption. | **COMPLETED** |
 | **08** | **HTTPS Connection & Pairing (ngrok / LAN)** | Secure HTTPS via ngrok/local LAN, operator pairing code flow, kiosk phone session binding, CSRF/origin checks. | Phone captures and receives events over HTTPS; unpaired devices rejected. | Pending |
 | **09** | **Multiple-Document Intake & OCR** | Multi-document grouping (agreement + receipt + annexure), page reordering, Indian script OCR, immutable case snapshot. | Page order intact; verbatim citations link to document/page; stale findings rejected. | Pending |
 | **10** | **Source Retrieval & Evidence Provenance** | Case-restricted document index, lexical/semantic retrieval, curated Indian statute corpus, exact citation anchors. | Citations point to verified sections/paragraphs; missing law acknowledged. | Pending |
@@ -31,35 +31,30 @@ This ledger tracks the status, primary deliverables, and verification gates acro
 
 ---
 
-## Phase 06 Execution Summary
+## Phase 07 Execution Summary
 
 - **Deliverables**:
-  - `IRfidReaderAdapter`, `SimulatedRfidReaderAdapter`, `HardwareRfidReaderAdapter` (`packages/shared-contracts/src/rfid.ts` and `apps/uno-gateway/src/rfid/rfid-adapter.ts`): Pluggable hardware adapter architecture. Accurately distinguishes physical reader validation (`/dev/ttyACM0` via Linux USB or microcontroller bridge) from software simulation mock (`isSimulated: true`). Hardware adapter strictly rejects simulated card fabrication attempts.
-  - `RfidSessionService` (`apps/main-api/src/services/rfid-session-service.ts`):
-    - Full card lifecycle state machine: `unassigned_inventory` -> `issued_to_visitor` -> `active_session` -> `returned_cleared` -> `revoked_lost`.
-    - Operator enrollment (`enrollCard`) and issuance (`issueCard`) with configurable ticket expiration.
-    - Tap resolution (`handleTapEvent`) with strict 3,000ms debouncing: repeated taps within the window return the active session with `debounced: true` and never spawn duplicate sessions or cases.
-    - Return card protocol (`returnCard`): marks assignment returned, reverts card state to `returned_cleared`, and **instantly purges all visitor session tokens** from `AuthService`.
-    - Reissuance guarantee (`issueCard` on returned card): generates a completely new isolated `sessionId` and `caseId` with zero documents, zero questions, and zero findings carried over from the prior visitor.
-    - Rejection enforcement: unknown cards (`404 UNKNOWN_CARD`), expired card tickets (`403 CARD_EXPIRED`), revoked cards (`403 CARD_REVOKED`), and unassigned cards (`400 CARD_NOT_ISSUED`).
-    - Session ticket guarantee: A card UID alone only ever grants a `visitor` role ticket and can never confer operator or administrative privileges.
-  - Gateway RFID Routes (`apps/uno-gateway/src/routes/rfid.ts`):
-    - `GET /api/v1/rfid/reader-status`: Exposes hardware status and verification mode.
-    - `GET /api/v1/rfid/latest-tap`: Kiosk phone polling endpoint.
-    - `POST /api/v1/rfid/simulate-tap`: Verified software simulation mock forwarder.
-    - `POST /api/v1/rfid/tap-event`: Hardware reader event ingestion and Main API forwarder.
-  - Central RFID Routes (`apps/main-api/src/routes/rfid.ts`):
-    - `POST /api/v1/rfid/tap-event`: Normalized tap handler.
-    - `POST /api/v1/cards/enroll`, `POST /api/v1/cards/issue`, `POST /api/v1/cards/:cardUid/return`, `POST /api/v1/cards/:cardUid/revoke`, `GET /api/v1/cards`, `GET /api/v1/cards/:cardUid`.
-  - Automated 8-Point Verification Suite (`apps/main-api/src/tests/phase06-verification.ts`):
-    1. Unknown RFID card rejection (`404 UNKNOWN_CARD`).
-    2. Revoked card rejection (`403 CARD_REVOKED`).
-    3. Expired card rejection (`403 CARD_EXPIRED`).
-    4. Card enrollment, issuance, and first-tap session activation.
-    5. Debouncing repeated taps within 3,000ms (confirms no duplicate session).
-    6. Return card ends session and revokes phone token access (`401 INVALID_SESSION` on subsequent requests).
-    7. Reissuing card creates a clean slate with 0% data carryover (new Case B has 0 documents, and Visitor B is rejected with `403 CROSS_CASE_ACCESS_DENIED` if attempting to view Case A).
-    8. Hardware verification vs. simulation distinction verified.
+  - `ICameraAdapter`, `SimulatedCameraAdapter`, `HardwareUvcCameraAdapter` (`apps/uno-gateway/src/capture/camera-adapter.ts`): Pluggable capture owner architecture for board-connected UVC camera (`/dev/video0`). Generates bounded preview frames (`640x480` at max 5 FPS to preserve ngrok bandwidth) and full 1080p stills with rotation support (0°, 90°, 180°, 270°).
+  - `SpoolService` (`apps/uno-gateway/src/services/spool-service.ts`): Bounded temporary disk spool under `./storage/uno_spool/` enforcing a strict 20-capture / 50MB ceiling. Enforces disk-pressure rejection (`507 SPOOL_DISK_PRESSURE`) when unacknowledged uploads saturate the buffer, and auto-cleans acknowledged captures upon successful server storage.
+  - `CaptureManager` (`apps/uno-gateway/src/services/capture-manager.ts`): Single native owner of the camera peripheral. Performs cryptographic SHA-256 pre-hashing, local spooling, and transmission to Main API with `X-Dharmaraksha-Device-Key` header. Implements `retryPendingUploads()` using stable page identities (`caseId`, `documentId`, `pageNumber`, `sha256`) to survive network dropouts and ensure exact-once delivery.
+  - `HeartbeatClient` (`apps/uno-gateway/src/services/heartbeat-client.ts`): Periodic background heartbeat to Main API tracking connection health without ever exposing device secrets.
+  - REST Endpoints (`apps/uno-gateway/src/routes/capture.ts`, `apps/uno-gateway/src/routes/health.ts`, `apps/uno-gateway/src/gateway.ts`):
+    - `GET /api/v1/capture/camera-health`: Hardware readiness and adapter mode.
+    - `GET /api/v1/capture/preview`: Live mobile-friendly viewfinder JPEG.
+    - `POST /api/v1/capture/page`: Board UVC camera page capture and upload pipeline.
+    - `POST /api/v1/capture/phone-fallback`: Explicit phone-camera fallback ingestion (HTML5 client-side camera upload, strictly distinguished from board USB hardware).
+    - `GET /api/v1/capture/spool-status`, `POST /api/v1/capture/retry`, `POST /api/v1/capture/cleanup`.
+    - `GET /api/v1/readiness`: Safe readiness reporting confirming zero device or provider keys are exposed to the phone client.
+  - Supervised Runtime & Hardware Documentation:
+    - `deploy/uno-q/dharmaraksha-gateway.service`: Hardened systemd unit with auto-restart, CPU quota (80%), memory ceiling (256MB), sandboxing, and non-root peripheral access.
+    - `docs/UNO_Q_HARDWARE_DEPENDENCIES.md`: Complete specification of Linux kernel modules (`uvcvideo`, `cdc_acm`), udev permission rules (`video`, `dialout`, `plugdev`), and resource limits.
+  - Automated 6-Point Verification Suite (`apps/uno-gateway/src/tests/phase07-verification.ts`):
+    1. Viewfinder preview generation (`640x480` valid JPEG).
+    2. Page capture, local spooling & durable Main API upload (SHA-256 verified).
+    3. Network interruption survival and recovery using stable page identities.
+    4. Bounded spool disk-pressure threshold enforcement (`507 SPOOL_DISK_PRESSURE`).
+    5. Explicit phone camera fallback ingestion (`source: 'phone_camera_fallback'`).
+    6. Zero secret leakage across all gateway public routes.
 - **Verification Gate**:
-  - All 8 acceptance tests executed and passed cleanly (`Exit Code: 0`).
+  - All 6 acceptance tests executed and passed cleanly (`Exit Code: 0`).
   - Monorepo typecheck passed with 0 errors across all 7 workspaces.

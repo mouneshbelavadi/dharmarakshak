@@ -95,3 +95,4 @@ rfidRouter.get('/cards/:cardUid', (req: Request, res: Response) => {
   }
   res.json({ card });
 });
+

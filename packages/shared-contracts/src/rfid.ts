@@ -72,3 +72,4 @@ export class HardwareRfidReaderAdapter implements IRfidReaderAdapter {
     };
   }
 }
+
