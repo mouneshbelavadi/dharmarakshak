@@ -190,3 +190,4 @@ pairingRouter.post('/pair/revoke', requireOperatorKey, (req: Request, res: Respo
 
   res.status(400).json({ error: 'MISSING_PARAMS', message: 'Provide pairingId or rfidCardUid.' });
 });
+

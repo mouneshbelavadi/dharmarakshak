@@ -30,6 +30,9 @@ export interface CaseDocumentSnapshot {
   snapshotVersion: number; // Monotonically increments whenever documents or pages change
   documentManifest: Array<{
     documentId: string;
+    title: string;
+    category: string;
+    parentDocumentId?: string;
     versionNumber: number;
     pageCount: number;
     manifestHash: string;

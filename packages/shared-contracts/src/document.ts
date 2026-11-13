@@ -20,6 +20,30 @@ export type PageContinuityStatus =
   | 'glare_detected'
   | 'misoriented_rotated';
 
+export interface ExtractedPassage {
+  passageId: string;
+  documentId: string;
+  documentTitle: string;
+  versionNumber: number;
+  pageNumber: number;
+  text: string;
+  language?: string;
+  scriptDetected?: string;
+  confidence?: number;
+  isUncertain?: boolean;
+  uncertaintyReason?: string;
+  containsDate?: string[];
+  containsAmount?: string[];
+  containsNegation?: boolean;
+  isTable?: boolean;
+  tableStructure?: {
+    headers: string[];
+    rows: string[][];
+  };
+  lineRange?: { start: number; end: number };
+  sourceAnchor: string; // e.g. "doc:doc-lease-01:v1:p2#para-3"
+}
+
 export interface DocumentPage {
   pageId: string;
   documentId: string;
@@ -35,6 +59,14 @@ export interface DocumentPage {
   sha256Checksum: string;
   byteSize: number;
   capturedAt: string;
+  isUncertain?: boolean;
+  uncertaintyReason?: string;
+  needsRecapture?: boolean;
+  reviewedText?: string; // Corrected text after human review
+  reviewedBy?: string;
+  reviewedAt?: string;
+  duplicateOfPageNumber?: number;
+  passages?: ExtractedPassage[];
 }
 
 export interface ImmutableDocumentVersion {
@@ -53,6 +85,7 @@ export interface CaseDocument {
   caseId: string;
   title: string;
   category: DocumentCategory;
+  parentDocumentId?: string; // Links an annexure/schedule to its parent agreement while keeping its own identity
   currentVersionNumber: number;
   versions: ImmutableDocumentVersion[];
   pages: DocumentPage[];
@@ -62,6 +95,9 @@ export interface CaseDocument {
   languageDetected?: string;
   contentHash: string;
   isArchived: boolean;
+  status?: 'draft_intake' | 'intake_completed' | 'archived';
+  originalFileName?: string;
+  fileType?: 'pdf' | 'image' | 'scanned_pages';
 }
 
 export interface UploadAcknowledgment {

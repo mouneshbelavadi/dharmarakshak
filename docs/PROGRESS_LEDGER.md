@@ -12,7 +12,7 @@ This ledger tracks the status, primary deliverables, and verification gates acro
 | **06** | **Issued-Card RFID Sessions** | Operator card enrollment, issuance, tap-to-start, 3000ms debounce window, session binding, return card cleanup (phone token purge), clean-slate reissue with zero data carryover, revocation, physical vs simulated reader adapter (`HardwareRfidReaderAdapter`, `SimulatedRfidReaderAdapter`), automated 8-point verification suite. | Duplicate taps create no duplicate session; reissue reveals none of previous visitor's data; hardware verification accurately distinguished from simulation. | **COMPLETED** |
 | **07** | **UNO Q Gateway & Capture Adapter** | ARM64 Linux gateway for UNO Q, UVC document camera adapter, rate-limited mobile viewfinder preview (`640x480`), bounded disk spool (`SpoolService`, 20 captures / 50MB max), disk-pressure thresholding, durable server acknowledgment, cryptographic SHA-256 pre-hash verification, interruption recovery with stable page identities, explicit phone-camera fallback, supervised systemd service, hardware dependency specification, zero secret leakage. | A real or explicitly simulated page reaches central case once; no provider secret or long-lived device key reaches phone; capture survives a recoverable interruption. | **COMPLETED** |
 | **08** | **HTTPS Connection & Pairing (ngrok / LAN)** | Strict CORS allowlist; `TunnelSupervisor`; `PairingService` with single-use codes; HttpOnly/Secure/SameSite cookie exchange; CSRF/origin middleware; `/api/v1/connectivity` separating tunnel from main-API failures; ngrok ARM64 config; phone pairing flow with concurrent-takeover prevention; card-return pairing revocation; 10-test verification suite. | Phone can capture and receive status over HTTPS; unpaired browser is denied; tunnel and main-API failures reported separately. | **COMPLETED** |
-| **09** | **Multiple-Document Intake & OCR** | Multi-document grouping (agreement + receipt + annexure), page reordering, Indian script OCR, immutable case snapshot. | Page order intact; verbatim citations link to document/page; stale findings rejected. | Pending |
+| **09** | **Multiple-Document Intake & OCR** | Multi-document grouping (agreement + receipt + annexure), parent-annexure linkage, page-by-page intake, page reordering, rotation, recapture, Indian script OCR (Kannada, Devanagari, Latin), full text (>1,000 chars without truncation), table & negation detection, uncertainty audit trail & review text correction, duplicate page detection without silent deletion, cross-document discrepancy detection, immutable case-document snapshots (v1 -> v2) with combined fingerprint, stale finding detection, and automated 8-point verification suite. | Document boundaries and page order survive capture/retry; every extracted passage points to its actual document/version/page; changes cannot silently reuse stale findings. | **COMPLETED** |
 | **10** | **Source Retrieval & Evidence Provenance** | Case-restricted document index, lexical/semantic retrieval, curated Indian statute corpus, exact citation anchors. | Citations point to verified sections/paragraphs; missing law acknowledged. | Pending |
 | **11** | **Bench A: Document & Evidence (10 Specialists)** | Specialists A01–A10, extraction validation, date/amount normalization, contradiction detection, Chair A10 packet. | Bench A returns structured BenchPacket with verbatim excerpts and line coordinates. | Pending |
 | **12** | **Bench B: Rights & Obligations (10 Specialists)** | Specialists B01–B10, domain contract analysis (tenancy, employment, sale, debt, consumer), Chair B10 packet. | Bench B accurately maps duties, lock-in clauses, and default remedies. | Pending |
@@ -97,3 +97,59 @@ This ledger tracks the status, primary deliverables, and verification gates acro
   - All 20 acceptance assertions across 10 tests executed and passed (`Exit Code: 0`).
   - Monorepo typecheck passed with 0 errors across all 7 workspaces (`npm run typecheck --workspaces`).
   - Full monorepo build clean (`npm run build --workspace=@dharmaraksha/shared-contracts`, `--workspace=@dharmaraksha/uno-gateway`).
+
+---
+
+## Phase 09 Execution Summary
+
+- **Deliverables**:
+  - `ExtractedPassage`, `CaseDocument`, `DocumentPage`, `CaseDocumentSnapshot` contract enhancements (`packages/shared-contracts/src/document.ts`, `case.ts`, `events.ts`):
+    - `parentDocumentId`: Links an annexure or schedule to its parent agreement while strictly preserving separate document identities.
+    - `ExtractedPassage`: Granular passage grounding with `documentId`, `documentTitle`, `versionNumber`, `pageNumber`, `sourceAnchor` (`doc:<id>:v<ver>:p<page>#para-<idx>`), `containsDate`, `containsAmount`, `containsNegation`, `isTable`, and script detection.
+    - `DocumentPage`: Full page metadata including `passages`, `continuityStatus` (`intact`, `duplicate_page`, `unreadable_blur`, `missing_intermediate_page`), `isUncertain`, `uncertaintyReason`, `needsRecapture`, `reviewedText`, `reviewedBy`, `reviewedAt`, and `duplicateOfPageNumber`.
+    - Event types: `document:created`, `document:page_added`, `document:pages_reordered`, `document:page_rotated`, `document:text_corrected`, `document:intake_finished`, `case:snapshot_finalized`.
+  - `OcrEngine` (`apps/main-api/src/services/ocr-engine.ts`):
+    - PDF text stream extraction and rasterized scan OCR processing.
+    - Preserves Indian scripts: supports Kannada (e.g. ಕನ್ನಡ), Devanagari/Hindi (e.g. वाणिज्यिक पट्टा), Tamil, Telugu, and English.
+    - Extracts legal dates (`1st September 2026`, `15th August 2026`, `28th August 2026`) and monetary amounts (`INR 45,000`, `Rs. 2,50,000`, `Rs. 2,70,000`).
+    - Detects legal negations ("shall not", "neither...nor", "no refund", "under no circumstances", "shall never", "non-refundable").
+    - Parses structured markdown/pipe tables with column headers and rows.
+    - Evaluates OCR quality and flags uncertainty without inventing confidence if unreadable.
+    - **No truncation**: Processes full-length documents (>1,000 characters).
+  - `DocumentIntakeService` (`apps/main-api/src/services/document-intake-service.ts`):
+    - `createDocument`: Creates named document with category, parentDocumentId validation.
+    - `addPage`: Page-by-page intake; stores still, computes SHA-256 pre-hash; detects duplicate pages without deleting them (flags `duplicate_page` and preserves legitimate page in sequence); segments text into anchored passages.
+    - `reorderPages`: Re-orders pages and re-indexes sequentially (1, 2, 3...) while updating passage anchors.
+    - `rotatePage`: Rotates page orientation (0°, 90°, 180°, 270°).
+    - `recapturePage`: Overwrites blurry scan with clear image, re-runs OCR, clears uncertainty.
+    - `reviewCorrectPageText`: Human review correction with immutable audit trail.
+    - `finishDocument`: Validates page continuity and creates `ImmutableDocumentVersion`.
+    - `finalizeSnapshot`: Finalizes an immutable `CaseDocumentSnapshot` with `snapshotVersion` (v1, v2...), `documentManifest`, total page count, and cryptographic `combinedFingerprint` (SHA-256).
+    - `detectCrossDocumentDiscrepancies`: Performs cross-document consistency analysis (conflicting dates, conflicting amounts, unattached exhibits) citing exact document titles, page numbers, and values.
+  - REST Endpoints (`apps/main-api/src/routes/documents.ts`):
+    - `POST /cases/:id/documents`: Add named document.
+    - `GET /cases/:id/documents`: Review all documents in case.
+    - `GET /cases/:id/documents/:docId`: Document inspection.
+    - `POST /cases/:id/documents/:docId/pages`: Page still upload with OCR & duplicate preservation.
+    - `POST /cases/:id/documents/:docId/pages/reorder`: Sequential reordering.
+    - `POST /cases/:id/documents/:docId/pages/:pageNum/rotate`: Rotation.
+    - `POST /cases/:id/documents/:docId/pages/:pageNum/recapture`: Clean recapture.
+    - `POST /cases/:id/documents/:docId/pages/:pageNum/correct-text`: Review text correction.
+    - `POST /cases/:id/documents/:docId/finish`: Finish document and freeze version.
+    - `POST /cases/:id/snapshots/finalize`: Finalize immutable snapshot.
+    - `GET /cases/:id/snapshots/current`: Retrieve active snapshot.
+    - `GET /cases/:id/discrepancies`: Retrieve cross-document discrepancies.
+  - Automated 8-Point Verification Suite (`apps/main-api/src/tests/phase09-verification.ts`):
+    1. Multi-document creation with parent-annexure linkage (Lease Agreement, Annexure A, Deposit Receipt).
+    2. Multi-page ingestion with Indian scripts (Devanagari, Kannada, Latin), full text (>1,000 characters without truncation), dates, amounts, negations, and tabular structures.
+    3. Document boundaries and page reordering preservation.
+    4. Text uncertainty detection, recapture, and reviewed text correction with audit trail.
+    5. Duplicate page detection without silent deletion (marked `duplicate_page` and preserved in sequence).
+    6. Cross-document discrepancy detection: Conflicting Date (1st September 2026 vs 15th August 2026) and Conflicting Amount (Rs. 2,50,000 vs Rs. 2,70,000), citing exact document title and page number.
+    7. Finalization of Immutable Case-Document Snapshot v1 (fingerprint and manifest).
+    8. Snapshot evolution (v1 -> v2) upon document modification and verification that v1 findings cannot be silently reused as fresh findings.
+
+- **Verification Gate**:
+  - All 8 acceptance tests executed and passed cleanly (`Exit Code: 0`).
+  - Monorepo typecheck passed with 0 errors across all 7 workspaces (`npm run typecheck`).
+  - Monorepo build passed across all 7 workspaces (`npm run build`).

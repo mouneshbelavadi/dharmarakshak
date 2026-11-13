@@ -132,3 +132,4 @@ function getAllowedOrigins(): string[] {
 }
 
 export { getAllowedOrigins };
+

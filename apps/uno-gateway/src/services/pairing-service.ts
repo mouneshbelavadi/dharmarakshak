@@ -293,3 +293,4 @@ export class PairingError extends Error {
 // ─── Singleton ───────────────────────────────────────────────────────────────
 
 export const pairingService = new PairingService();
+
