@@ -1,21 +1,47 @@
 import { useState } from 'react';
 import { IndianLanguage, PhoneTheme } from '@dharmaraksha/shared-contracts';
 import { KioskHeader } from './components/KioskHeader.js';
-import { TapCardPrompt } from './components/TapCardPrompt.js';
-import { CaptureControls } from './components/CaptureControls.js';
-import { SimpleVoiceAssistant } from './components/SimpleVoiceAssistant.js';
-import { Sun, Moon } from 'lucide-react';
+import { WelcomeTapScreen } from './screens/WelcomeTapScreen.js';
+import { ConsentLanguageScreen } from './screens/ConsentLanguageScreen.js';
+import { DocumentListScreen } from './screens/DocumentListScreen.js';
+import { CaptureReviewScreen } from './screens/CaptureReviewScreen.js';
+import { ProcessingStatusScreen } from './screens/ProcessingStatusScreen.js';
+import { AskDocumentScreen } from './screens/AskDocumentScreen.js';
+import { ResultDeliveryScreen } from './screens/ResultDeliveryScreen.js';
+import { Sun, Moon, Radio } from 'lucide-react';
 import './styles/theme.css';
 
+type PhoneStep =
+  | 'welcome_tap'
+  | 'consent_language'
+  | 'document_list'
+  | 'capture_review'
+  | 'processing'
+  | 'ask_qa'
+  | 'result_delivery';
+
 export function App() {
+  const [currentStep, setCurrentStep] = useState<PhoneStep>('welcome_tap');
   const [selectedLanguage, setSelectedLanguage] = useState<IndianLanguage>('en');
   const [phoneTheme, setPhoneTheme] = useState<PhoneTheme>('light');
   const [cardUid, setCardUid] = useState<string | undefined>();
   const [isSimulatingTap, setIsSimulatingTap] = useState(false);
   const [consentGiven, setConsentGiven] = useState(false);
-  const [pageCount, setPageCount] = useState<number>(0);
   const [isCapturing, setIsCapturing] = useState(false);
-  const [reviewStarted, setReviewStarted] = useState(false);
+  const [activeDocTitle, setActiveDocTitle] = useState('Lease Agreement');
+
+  // Sample Documents List in Phone Case Folio
+  const [documents, setDocuments] = useState([
+    { id: 'doc-001', title: 'Lease Agreement', category: 'Tenancy Contract', pageCount: 3 },
+    { id: 'doc-002', title: 'Security Deposit RTGS Receipt', category: 'Bank Receipt', pageCount: 1 }
+  ]);
+
+  // Sample Pages for Active Document
+  const [activePages, setActivePages] = useState([
+    { id: 'pg-1', pageNumber: 1, previewUrl: '', status: 'ok' as const },
+    { id: 'pg-2', pageNumber: 2, previewUrl: '', status: 'ok' as const },
+    { id: 'pg-3', pageNumber: 3, previewUrl: '', status: 'ok' as const }
+  ]);
 
   const handleSimulateTap = () => {
     setIsSimulatingTap(true);
@@ -28,13 +54,26 @@ export function App() {
   const handleCapturePage = () => {
     setIsCapturing(true);
     setTimeout(() => {
-      setPageCount((prev) => prev + 1);
+      setActivePages((prev) => [
+        ...prev,
+        { id: `pg-${prev.length + 1}`, pageNumber: prev.length + 1, previewUrl: '', status: 'ok' }
+      ]);
       setIsCapturing(false);
     }, 800);
   };
 
-  const handleCompleteDocument = () => {
-    setReviewStarted(true);
+  const handleRotatePage = (pageId: string) => {
+    alert(`Rotated page ${pageId} by 90 degrees`);
+  };
+
+  const handleDeletePage = (pageId: string) => {
+    setActivePages((prev) => prev.filter((p) => p.id !== pageId));
+  };
+
+  const handleFinishAndReset = () => {
+    setCardUid(undefined);
+    setConsentGiven(false);
+    setCurrentStep('welcome_tap');
   };
 
   return (
@@ -48,7 +87,9 @@ export function App() {
         color: phoneTheme === 'light' ? '#0f172a' : '#f8fafc',
         display: 'flex',
         flexDirection: 'column',
-        transition: 'background 0.2s, color 0.2s'
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        boxSizing: 'border-box'
       }}
     >
       <KioskHeader
@@ -58,8 +99,22 @@ export function App() {
       />
 
       <main style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
-        {/* Subtle Theme Toggle for Kiosk Accessibility */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        {/* Top Diagnostic / Theme Bar */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{
+            fontSize: '11px',
+            color: '#065f46',
+            background: '#ecfdf5',
+            padding: '3px 8px',
+            borderRadius: '6px',
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px'
+          }}>
+            <Radio style={{ width: 11, height: 11, color: '#10b981' }} /> UNO Q Gateway
+          </span>
+
           <button
             onClick={() => setPhoneTheme(phoneTheme === 'light' ? 'dark' : 'light')}
             style={{
@@ -75,60 +130,82 @@ export function App() {
               minHeight: '36px'
             }}
           >
-            {phoneTheme === 'light' ? (
-              <>
-                <Moon style={{ width: 12, height: 12 }} /> Dark Mode
-              </>
-            ) : (
-              <>
-                <Sun style={{ width: 12, height: 12 }} /> Light Mode
-              </>
-            )}
+            {phoneTheme === 'light' ? <Moon style={{ width: 12, height: 12 }} /> : <Sun style={{ width: 12, height: 12 }} />}
+            {phoneTheme === 'light' ? 'Dark' : 'Light'}
           </button>
         </div>
 
-        <TapCardPrompt
-          cardUid={cardUid}
-          isSimulating={isSimulatingTap}
-          onSimulateTap={handleSimulateTap}
-          consentGiven={consentGiven}
-          onToggleConsent={setConsentGiven}
-        />
+        {/* 7-Step Visitor Flow Router */}
+        {currentStep === 'welcome_tap' && (
+          <WelcomeTapScreen
+            cardUid={cardUid}
+            isSimulating={isSimulatingTap}
+            onSimulateTap={handleSimulateTap}
+            onProceed={() => setCurrentStep('consent_language')}
+          />
+        )}
 
-        {cardUid && consentGiven && !reviewStarted && (
-          <CaptureControls
-            pageCount={pageCount}
+        {currentStep === 'consent_language' && (
+          <ConsentLanguageScreen
+            selectedLanguage={selectedLanguage}
+            onLanguageChange={setSelectedLanguage}
+            consentGiven={consentGiven}
+            onConsentChange={setConsentGiven}
+            onProceed={() => setCurrentStep('document_list')}
+            onBack={() => setCurrentStep('welcome_tap')}
+          />
+        )}
+
+        {currentStep === 'document_list' && (
+          <DocumentListScreen
+            documents={documents}
+            onSelectDocument={(id) => {
+              const doc = documents.find((d) => d.id === id);
+              if (doc) setActiveDocTitle(doc.title);
+              setCurrentStep('capture_review');
+            }}
+            onAddDocument={() => {
+              setActiveDocTitle('Additional Annexure');
+              setCurrentStep('capture_review');
+            }}
+            onProceedToReview={() => setCurrentStep('processing')}
+          />
+        )}
+
+        {currentStep === 'capture_review' && (
+          <CaptureReviewScreen
+            documentTitle={activeDocTitle}
+            pages={activePages}
             onCapturePage={handleCapturePage}
-            onCompleteDocument={handleCompleteDocument}
+            onRotatePage={handleRotatePage}
+            onDeletePage={handleDeletePage}
+            onFinishDocument={() => setCurrentStep('document_list')}
+            onBackToDocuments={() => setCurrentStep('document_list')}
             isCapturing={isCapturing}
           />
         )}
 
-        {cardUid && consentGiven && reviewStarted && (
-          <div style={{
-            background: phoneTheme === 'light' ? '#ecfdf5' : '#064e3b',
-            border: `1px solid ${phoneTheme === 'light' ? '#a7f3d0' : '#047857'}`,
-            borderRadius: '16px',
-            padding: '16px',
-            textAlign: 'center',
-            color: phoneTheme === 'light' ? '#065f46' : '#a7f3d0'
-          }}>
-            <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '4px' }}>
-              Review In Progress on Laptop Tribunal
-            </h3>
-            <p style={{ fontSize: '12px', color: phoneTheme === 'light' ? '#047857' : '#6ee7b7' }}>
-              Watch the 3D chamber on the laptop screen. You may ask questions below at any time.
-            </p>
-          </div>
+        {currentStep === 'processing' && (
+          <ProcessingStatusScreen
+            currentStage={5} // Demo complete stage
+            onProceedToQA={() => setCurrentStep('ask_qa')}
+          />
         )}
 
-        {cardUid && consentGiven && (
-          <SimpleVoiceAssistant language={selectedLanguage} />
+        {currentStep === 'ask_qa' && (
+          <AskDocumentScreen
+            language={selectedLanguage}
+            onProceedToDelivery={() => setCurrentStep('result_delivery')}
+          />
+        )}
+
+        {currentStep === 'result_delivery' && (
+          <ResultDeliveryScreen onFinishAndReset={handleFinishAndReset} />
         )}
       </main>
 
       <footer style={{ padding: '12px 16px', textAlign: 'center', fontSize: '11px', color: '#94a3b8' }}>
-        DHARMARAKSHA Kiosk Companion • Powered by UNO Q Gateway & Sarvam AI
+        DHARMARAKSHA Kiosk Companion • Step: {currentStep.replace('_', ' ').toUpperCase()}
       </footer>
     </div>
   );

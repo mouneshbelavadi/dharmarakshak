@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { PresentationHeader, LaptopActiveTab } from './components/PresentationHeader.js';
+import { PresentationHeader, LaptopDestination } from './components/PresentationHeader.js';
 import { TribunalChamber } from './components/TribunalChamber.js';
 import { DocumentWorkspace } from './components/DocumentWorkspace.js';
-import { DocumentComparison } from './components/DocumentComparison.js';
-import { GroundedQAPanel } from './components/GroundedQAPanel.js';
+import { DocumentsView } from './components/DocumentsView.js';
 import { ReportPreview } from './components/ReportPreview.js';
+import { ConnectionsView } from './components/ConnectionsView.js';
+import { DeviceManagementView } from './components/DeviceManagementView.js';
 import { BenchInspector } from './components/BenchInspector.js';
-import { CaseRecord, LaptopTheme } from '@dharmaraksha/shared-contracts';
+import { CaseRecord, LaptopTheme, UserRole } from '@dharmaraksha/shared-contracts';
 import './styles/theme.css';
 
 const sampleCase: CaseRecord = {
@@ -61,9 +62,11 @@ const sampleCase: CaseRecord = {
 };
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<LaptopActiveTab>('chamber_folio');
+  const [destination, setDestination] = useState<LaptopDestination>('review');
   const [theme, setTheme] = useState<LaptopTheme>('split');
+  const [userRole, setUserRole] = useState<UserRole>('visitor');
   const [isPresentationMode, setIsPresentationMode] = useState<boolean>(true);
+  const [isFixture, setIsFixture] = useState<boolean>(true);
   const [selectedBenchId, setSelectedBenchId] = useState<'A' | 'B' | 'C' | 'D' | 'E'>('A');
 
   return (
@@ -81,19 +84,23 @@ export function App() {
     >
       <PresentationHeader
         currentCase={sampleCase}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
+        destination={destination}
+        onDestinationChange={setDestination}
         theme={theme}
         onThemeChange={setTheme}
+        userRole={userRole}
+        onUserRoleChange={setUserRole}
         isPresentationMode={isPresentationMode}
         onTogglePresentationMode={() => setIsPresentationMode(!isPresentationMode)}
+        isFixture={isFixture}
+        onToggleFixture={() => setIsFixture(!isFixture)}
       />
 
       <div style={{ display: 'flex', flex: 1, height: 'calc(100vh - 56px)', overflow: 'hidden' }}>
-        {/* Dynamic Center Workspaces based on Active Tab */}
+        {/* Dynamic Center Workspaces based on Destination */}
         <div style={{ flex: 1, height: '100%', overflow: 'hidden', display: 'flex' }}>
-          {/* Tab 1: Chamber & Folio (Default Split View) */}
-          {activeTab === 'chamber_folio' && (
+          {/* Destination 1: Review (Split Workspace: Folio + 3D Chamber) */}
+          {destination === 'review' && (
             <>
               {/* Left Side: Warm Ivory Folio Workspace */}
               <div style={{
@@ -115,32 +122,34 @@ export function App() {
             </>
           )}
 
-          {/* Tab 2: Document Comparison (Side-by-side Folios) */}
-          {activeTab === 'comparison' && (
-            <DocumentComparison currentCase={sampleCase} />
+          {/* Destination 2: Documents (Multi-document Folio Manager) */}
+          {destination === 'documents' && (
+            <DocumentsView currentCase={sampleCase} isFixture={isFixture} />
           )}
 
-          {/* Tab 3: Grounded Conversational Q&A */}
-          {activeTab === 'qa' && (
-            <GroundedQAPanel currentCase={sampleCase} />
-          )}
-
-          {/* Tab 4: Referenced Report Preview & Delivery */}
-          {activeTab === 'report' && (
+          {/* Destination 3: Reports (Referenced PDF Preview & Export) */}
+          {destination === 'reports' && (
             <ReportPreview currentCase={sampleCase} />
           )}
 
-          {/* Tab 5: Accessible 2D Fallback View (Full Folio without WebGL) */}
-          {activeTab === 'accessible_2d' && (
-            <DocumentWorkspace currentCase={sampleCase} />
+          {/* Destination 4: Connections (Telegram, Drive, Gmail, Tunnel status) */}
+          {destination === 'connections' && (
+            <ConnectionsView isFixture={isFixture} />
+          )}
+
+          {/* Destination 5: Device (Role-gated UNO Q & RFID Console) */}
+          {destination === 'device' && (
+            <DeviceManagementView userRole={userRole} isFixture={isFixture} />
           )}
         </div>
 
-        {/* Bench & Specialist Inspector Sidebar (Always Available) */}
-        <BenchInspector
-          selectedBenchId={selectedBenchId}
-          onSelectBench={setSelectedBenchId}
-        />
+        {/* Bench & Specialist Inspector Sidebar (Shown on Review destination) */}
+        {destination === 'review' && (
+          <BenchInspector
+            selectedBenchId={selectedBenchId}
+            onSelectBench={setSelectedBenchId}
+          />
+        )}
       </div>
     </div>
   );

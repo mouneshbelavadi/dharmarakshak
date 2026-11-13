@@ -1,27 +1,35 @@
 import React from 'react';
-import { Shield, Eye, Layers, GitCompare, MessageSquare, FileText, Sun, Moon, Split, Terminal } from 'lucide-react';
-import { CaseRecord, LaptopTheme } from '@dharmaraksha/shared-contracts';
+import { Shield, Eye, Layers, GitCompare, MessageSquare, FileText, Sun, Moon, Split, Terminal, HardDrive, Cpu, Radio } from 'lucide-react';
+import { CaseRecord, LaptopTheme, UserRole } from '@dharmaraksha/shared-contracts';
 
-export type LaptopActiveTab = 'chamber_folio' | 'comparison' | 'qa' | 'report' | 'accessible_2d';
+export type LaptopDestination = 'review' | 'documents' | 'reports' | 'connections' | 'device';
 
 interface PresentationHeaderProps {
   currentCase: CaseRecord;
-  activeTab: LaptopActiveTab;
-  onTabChange: (tab: LaptopActiveTab) => void;
+  destination: LaptopDestination;
+  onDestinationChange: (dest: LaptopDestination) => void;
   theme: LaptopTheme;
   onThemeChange: (theme: LaptopTheme) => void;
+  userRole: UserRole;
+  onUserRoleChange: (role: UserRole) => void;
   isPresentationMode: boolean;
   onTogglePresentationMode: () => void;
+  isFixture: boolean;
+  onToggleFixture: () => void;
 }
 
 export const PresentationHeader: React.FC<PresentationHeaderProps> = ({
   currentCase,
-  activeTab,
-  onTabChange,
+  destination,
+  onDestinationChange,
   theme,
   onThemeChange,
+  userRole,
+  onUserRoleChange,
   isPresentationMode,
-  onTogglePresentationMode
+  onTogglePresentationMode,
+  isFixture,
+  onToggleFixture
 }) => {
   return (
     <header style={{
@@ -35,7 +43,7 @@ export const PresentationHeader: React.FC<PresentationHeaderProps> = ({
       color: theme === 'light' ? '#0f172a' : '#ffffff',
       transition: 'background 0.2s, color 0.2s'
     }}>
-      {/* Brand & Case Info */}
+      {/* Brand & Mode Status */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <div style={{
           width: 32,
@@ -52,16 +60,32 @@ export const PresentationHeader: React.FC<PresentationHeaderProps> = ({
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '15px', fontWeight: 700, letterSpacing: '0.5px' }}>DHARMARAKSHA</span>
-            <span style={{
-              fontSize: '11px',
-              backgroundColor: '#1e3a8a',
-              color: '#93c5fd',
-              padding: '2px 6px',
-              borderRadius: '4px',
-              fontWeight: 600
-            }}>
-              PAPER & INK
-            </span>
+            {isFixture ? (
+              <span style={{
+                fontSize: '10px',
+                backgroundColor: '#fef3c7',
+                color: '#92400e',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                fontWeight: 700
+              }}>
+                SAMPLE FIXTURE
+              </span>
+            ) : (
+              <span style={{
+                fontSize: '10px',
+                backgroundColor: '#ecfdf5',
+                color: '#065f46',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3px'
+              }}>
+                <Radio style={{ width: 10, height: 10, color: '#10b981' }} /> LIVE BACKEND
+              </span>
+            )}
           </div>
           <div style={{ fontSize: '11px', color: '#64748b' }}>
             {currentCase.title} (v{currentCase.currentSnapshotVersion})
@@ -69,8 +93,8 @@ export const PresentationHeader: React.FC<PresentationHeaderProps> = ({
         </div>
       </div>
 
-      {/* Main Tab Navigation */}
-      <div style={{
+      {/* Primary Destinations */}
+      <nav style={{
         display: 'flex',
         background: theme === 'light' ? '#f1f5f9' : '#1e293b',
         borderRadius: '8px',
@@ -78,99 +102,120 @@ export const PresentationHeader: React.FC<PresentationHeaderProps> = ({
         gap: '2px'
       }}>
         <button
-          onClick={() => onTabChange('chamber_folio')}
+          onClick={() => onDestinationChange('review')}
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            padding: '5px 10px',
+            padding: '6px 12px',
             borderRadius: '6px',
             fontSize: '12px',
             fontWeight: 500,
-            background: activeTab === 'chamber_folio' ? '#3b82f6' : 'transparent',
-            color: activeTab === 'chamber_folio' ? '#ffffff' : '#64748b'
+            background: destination === 'review' ? '#3b82f6' : 'transparent',
+            color: destination === 'review' ? '#ffffff' : '#64748b'
           }}
         >
           <Layers style={{ width: 14, height: 14 }} />
-          Chamber & Folio
+          Review
         </button>
 
         <button
-          onClick={() => onTabChange('comparison')}
+          onClick={() => onDestinationChange('documents')}
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            padding: '5px 10px',
+            padding: '6px 12px',
             borderRadius: '6px',
             fontSize: '12px',
             fontWeight: 500,
-            background: activeTab === 'comparison' ? '#3b82f6' : 'transparent',
-            color: activeTab === 'comparison' ? '#ffffff' : '#64748b'
-          }}
-        >
-          <GitCompare style={{ width: 14, height: 14 }} />
-          Comparison
-        </button>
-
-        <button
-          onClick={() => onTabChange('qa')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '5px 10px',
-            borderRadius: '6px',
-            fontSize: '12px',
-            fontWeight: 500,
-            background: activeTab === 'qa' ? '#3b82f6' : 'transparent',
-            color: activeTab === 'qa' ? '#ffffff' : '#64748b'
-          }}
-        >
-          <MessageSquare style={{ width: 14, height: 14 }} />
-          Grounded Q&A
-        </button>
-
-        <button
-          onClick={() => onTabChange('report')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '5px 10px',
-            borderRadius: '6px',
-            fontSize: '12px',
-            fontWeight: 500,
-            background: activeTab === 'report' ? '#3b82f6' : 'transparent',
-            color: activeTab === 'report' ? '#ffffff' : '#64748b'
+            background: destination === 'documents' ? '#3b82f6' : 'transparent',
+            color: destination === 'documents' ? '#ffffff' : '#64748b'
           }}
         >
           <FileText style={{ width: 14, height: 14 }} />
-          Report
+          Documents
         </button>
 
         <button
-          onClick={() => onTabChange('accessible_2d')}
+          onClick={() => onDestinationChange('reports')}
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            padding: '5px 10px',
+            padding: '6px 12px',
             borderRadius: '6px',
             fontSize: '12px',
             fontWeight: 500,
-            background: activeTab === 'accessible_2d' ? '#3b82f6' : 'transparent',
-            color: activeTab === 'accessible_2d' ? '#ffffff' : '#64748b'
+            background: destination === 'reports' ? '#3b82f6' : 'transparent',
+            color: destination === 'reports' ? '#ffffff' : '#64748b'
           }}
         >
-          <Terminal style={{ width: 14, height: 14 }} />
-          2D Accessible
+          <GitCompare style={{ width: 14, height: 14 }} />
+          Reports
         </button>
-      </div>
 
-      {/* Theme Switcher & Evaluator View Button */}
+        <button
+          onClick={() => onDestinationChange('connections')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '6px 12px',
+            borderRadius: '6px',
+            fontSize: '12px',
+            fontWeight: 500,
+            background: destination === 'connections' ? '#3b82f6' : 'transparent',
+            color: destination === 'connections' ? '#ffffff' : '#64748b'
+          }}
+        >
+          <HardDrive style={{ width: 14, height: 14 }} />
+          Connections
+        </button>
+
+        <button
+          onClick={() => onDestinationChange('device')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '6px 12px',
+            borderRadius: '6px',
+            fontSize: '12px',
+            fontWeight: 500,
+            background: destination === 'device' ? '#3b82f6' : 'transparent',
+            color: destination === 'device' ? '#ffffff' : '#64748b'
+          }}
+        >
+          <Cpu style={{ width: 14, height: 14 }} />
+          Device
+        </button>
+      </nav>
+
+      {/* Role Picker, Theme Toggles & Evaluator View */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        {/* Theme Toggles */}
+        {/* Role Selector */}
+        <select
+          value={userRole}
+          onChange={(e) => onUserRoleChange(e.target.value as UserRole)}
+          style={{
+            background: theme === 'light' ? '#f1f5f9' : '#1e293b',
+            color: theme === 'light' ? '#0f172a' : '#f8fafc',
+            border: '1px solid #cbd5e1',
+            borderRadius: '6px',
+            padding: '4px 8px',
+            fontSize: '11px',
+            fontWeight: 600,
+            outline: 'none'
+          }}
+        >
+          <option value="visitor">Role: Visitor</option>
+          <option value="operator">Role: Operator</option>
+          <option value="evaluator">Role: Evaluator</option>
+          <option value="admin">Role: Admin</option>
+        </select>
+
+        {/* Theme Switcher */}
         <div style={{
           display: 'flex',
           background: theme === 'light' ? '#f1f5f9' : '#1e293b',
@@ -234,7 +279,7 @@ export const PresentationHeader: React.FC<PresentationHeaderProps> = ({
           </button>
         </div>
 
-        {/* Evaluator Presentation Mode */}
+        {/* Evaluator Mode Button */}
         <button
           onClick={onTogglePresentationMode}
           style={{
@@ -250,7 +295,7 @@ export const PresentationHeader: React.FC<PresentationHeaderProps> = ({
           }}
         >
           <Eye style={{ width: 14, height: 14 }} />
-          {isPresentationMode ? 'Evaluator (Active)' : 'Evaluator'}
+          {isPresentationMode ? 'Evaluator' : 'Evaluator'}
         </button>
       </div>
     </header>
