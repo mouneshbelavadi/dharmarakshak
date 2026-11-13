@@ -43,14 +43,30 @@ export interface CaseDocumentSnapshot {
 }
 
 export interface PresidingReviewSummary {
+  runId?: string;
   executiveSummary: string;
+  preliminaryFindings?: string[];
   keyObligations: string[];
   materialRisks: string[];
   criticalDeadlines: string[];
   inconsistenciesIdentified: string[];
+  preservedDisagreements?: Array<{
+    disagreementId: string;
+    clauseReference?: string;
+    viewpointA: string;
+    viewpointB: string;
+    preservationRationale: string;
+  }>;
   questionsForVisitorClarification: string[];
   missingDocumentsOrExhibits: string[];
   statutoryCoverageLimitations: string[];
+  citationVerifications?: Array<{
+    citation: string;
+    isVerified: boolean;
+    reason?: string;
+  }>;
+  publicationStatus?: 'published' | 'publication_blocked' | 'partial_preliminary';
+  statutoryDisclaimer?: string;
   certifiedPlainLanguage: boolean;
   reviewedAt: string;
 }

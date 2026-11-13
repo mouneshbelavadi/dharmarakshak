@@ -41,19 +41,50 @@ export interface DiscrepancyReport {
   resolved: boolean;
 }
 
+export interface PreservedDisagreement {
+  disagreementId: string;
+  clauseReference?: string;
+  specialistA: string;
+  viewpointA: string;
+  specialistB: string;
+  viewpointB: string;
+  preservationRationale: string;
+}
+
 export interface BenchPacket {
+  packetId: string;
+  runId: string;
+  snapshotVersion: number;
+  packetVersion: number;
   benchId: 'A' | 'B' | 'C' | 'D' | 'E';
   chairId: string;
   caseId: string;
-  status: 'draft' | 'ready_for_messenger' | 'delivered_to_presiding' | 'rejected_for_rework';
+  status: 'draft' | 'packet_ready' | 'ready_for_messenger' | 'delivered_to_presiding' | 'rejected_for_rework';
   generatedAt: string;
+  packetChecksum: string;
   findings: SpecialistFinding[];
   discrepancies: DiscrepancyReport[];
+  preservedDisagreements: PreservedDisagreement[];
   coverageAssessment: {
     coveredPoints: string[];
     unresolvedQuestions: string[];
     missingEvidenceNoted: string[];
+    failedCoverage?: string[];
   };
   specialistExecutions: Record<string, { status: SpecialistStatus; latencyMs: number; errorMessage?: string }>;
+}
+
+export interface PacketDeliveryReceipt {
+  receiptId: string;
+  packetId: string;
+  benchId: 'A' | 'B' | 'C' | 'D' | 'E';
+  runId: string;
+  chairId: string;
+  deliveredAt: string;
+  recipientId: 'PRESIDING_REVIEWER';
+  status: 'accepted' | 'duplicate_ignored' | 'rejected_invalid';
+  isDuplicate: boolean;
+  packetChecksum: string;
+  validationErrors: string[];
 }
 

@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "start": "node dist/index.js",
     "test:phase12": "node dist/tests/phase12-verification.js",
+    "test:phase13": "node dist/tests/phase13-verification.js",
     "dev": "tsc -w",
     "clean": "rimraf dist"
   },
