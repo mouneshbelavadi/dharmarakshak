@@ -19,6 +19,7 @@ interface ChamberOverlayControlsProps {
   currentActivity?: CharacterActivity;
   onSelectActivity?: (activity: CharacterActivity) => void;
   onOpenValidator?: () => void;
+  onOpenScanner?: () => void;
   milestones?: Array<{ name: string; timestamp: string; status: string }>;
   origin?: string;
   isConnected?: boolean;
@@ -39,6 +40,7 @@ export const ChamberOverlayControls: React.FC<ChamberOverlayControlsProps> = ({
   currentActivity = 'idle_breathing',
   onSelectActivity,
   onOpenValidator,
+  onOpenScanner,
   milestones,
   origin,
   isConnected
@@ -344,6 +346,32 @@ export const ChamberOverlayControls: React.FC<ChamberOverlayControlsProps> = ({
               ))}
             </select>
           </div>
+
+          {/* Live Document Camera Scanner Button */}
+          {onOpenScanner && (
+            <button
+              onClick={onOpenScanner}
+              style={{
+                padding: '5px 12px',
+                fontSize: '11px',
+                fontWeight: 700,
+                borderRadius: '8px',
+                background: 'linear-gradient(135deg, rgba(201, 168, 76, 0.25) 0%, rgba(180, 83, 9, 0.3) 100%)',
+                color: '#fef08a',
+                border: '1px solid #c9a84c',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                backdropFilter: 'blur(10px)',
+                boxShadow: '0 2px 10px rgba(201, 168, 76, 0.25)'
+              }}
+              title="Open Live Courtroom Document Camera Scanner (OCR + Gemini Grounded Analysis)"
+            >
+              <Camera style={{ width: 13, height: 13, color: '#fbbf24' }} />
+              <span>Scan Document</span>
+            </button>
+          )}
 
           {/* Single Character Rig Validator Button */}
           {onOpenValidator && (

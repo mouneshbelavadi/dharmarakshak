@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useMemo, Suspense } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, Text, Float } from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import {
   BENCHES,
@@ -29,6 +29,94 @@ import { SingleCharacterValidator } from './character/SingleCharacterValidator.j
 import { CourtroomDossierModal } from './CourtroomDossierModal.js';
 import { useCaseEvents } from '../hooks/useCaseEvents.js';
 import { Loader2, Camera, Play, Pause, RotateCcw, Volume2, Sparkles, Scale } from 'lucide-react';
+
+// ─── Crisp High-DPI Canvas Text Plane (100% Offline, Zero Suspense Hangs) ─────
+interface CanvasTextProps {
+  text: string;
+  subtext?: string;
+  width?: number;
+  height?: number;
+  textColor?: string;
+  subColor?: string;
+  bgColor?: string;
+  borderColor?: string;
+  position?: [number, number, number];
+  rotation?: [number, number, number];
+  fontSize?: number;
+  subFontSize?: number;
+}
+
+const CanvasText: React.FC<CanvasTextProps> = ({
+  text,
+  subtext,
+  width = 1.6,
+  height = 0.22,
+  textColor = '#1a1208',
+  subColor = '#3d2817',
+  bgColor = 'transparent',
+  borderColor = 'transparent',
+  position = [0, 0, 0],
+  rotation = [0, 0, 0],
+  fontSize = 30,
+  subFontSize = 18
+}) => {
+  const texture = useMemo(() => {
+    if (typeof document === 'undefined') return null;
+    const canvas = document.createElement('canvas');
+    const scale = 4; // High-DPI supersampling
+    canvas.width = Math.round(width * 256 * scale);
+    canvas.height = Math.round(height * 256 * scale);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+
+    ctx.scale(scale, scale);
+    const w = width * 256;
+    const h = height * 256;
+
+    if (bgColor !== 'transparent') {
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    if (borderColor !== 'transparent') {
+      ctx.strokeStyle = borderColor;
+      ctx.lineWidth = 3;
+      ctx.strokeRect(2, 2, w - 4, h - 4);
+    }
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    if (subtext) {
+      ctx.font = `bold ${fontSize}px "Cinzel", "Palatino Linotype", "Times New Roman", Georgia, serif`;
+      ctx.fillStyle = textColor;
+      ctx.fillText(text, w / 2, h / 2 - subFontSize * 0.52);
+
+      ctx.font = `bold ${subFontSize}px "Cinzel", "Inter", "Arial", sans-serif`;
+      ctx.fillStyle = subColor;
+      ctx.fillText(subtext, w / 2, h / 2 + fontSize * 0.52);
+    } else {
+      ctx.font = `bold ${fontSize}px "Cinzel", "Palatino Linotype", "Times New Roman", Georgia, serif`;
+      ctx.fillStyle = textColor;
+      ctx.fillText(text, w / 2, h / 2);
+    }
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.minFilter = THREE.LinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    tex.generateMipmaps = false;
+    return tex;
+  }, [text, subtext, width, height, textColor, subColor, bgColor, borderColor, fontSize, subFontSize]);
+
+  if (!texture) return null;
+
+  return (
+    <mesh position={position} rotation={rotation}>
+      <planeGeometry args={[width, height]} />
+      <meshBasicMaterial map={texture} transparent opacity={1} side={THREE.DoubleSide} />
+    </mesh>
+  );
+};
 
 // ─── Camera Controller with Smooth Lerping & Cinematic Tour ──────────────────
 interface CameraControllerProps {
@@ -59,18 +147,18 @@ const CameraController: React.FC<CameraControllerProps> = ({
   const controlsRef = useRef<any>(null);
   const tourIndexRef = useRef(0);
   const tourTimerRef = useRef(0);
+  const isTransitioningRef = useRef<boolean>(true);
 
   const targetPosRef = useRef(new THREE.Vector3(...CAMERA_PRESETS.overall.position));
   const targetLookAtRef = useRef(new THREE.Vector3(...CAMERA_PRESETS.overall.target));
 
   // Sync camera preset target immediately on change
   useEffect(() => {
-    if (!isTouring) {
-      const cfg = CAMERA_PRESETS[preset] || CAMERA_PRESETS.overall;
-      targetPosRef.current.set(...cfg.position);
-      targetLookAtRef.current.set(...cfg.target);
-    }
-  }, [preset, isTouring]);
+    const cfg = CAMERA_PRESETS[preset] || CAMERA_PRESETS.overall;
+    targetPosRef.current.set(...cfg.position);
+    targetLookAtRef.current.set(...cfg.target);
+    isTransitioningRef.current = true;
+  }, [preset]);
 
   useFrame((_, delta) => {
     if (!controlsRef.current) return;
@@ -85,21 +173,37 @@ const CameraController: React.FC<CameraControllerProps> = ({
         const cfg = CAMERA_PRESETS[nextPreset] || CAMERA_PRESETS.overall;
         targetPosRef.current.set(...cfg.position);
         targetLookAtRef.current.set(...cfg.target);
+        isTransitioningRef.current = true;
         if (onTourStep) {
           onTourStep(nextPreset);
         }
       }
     }
 
-    if (reducedMotion) {
-      camera.position.copy(targetPosRef.current);
-      controlsRef.current.target.copy(targetLookAtRef.current);
-    } else {
-      // Exponential smooth lerp for buttery camera flight
-      const factor = isTouring ? 1 - Math.exp(-2.5 * Math.min(delta, 0.1)) : 1 - Math.exp(-6 * Math.min(delta, 0.1));
-      camera.position.lerp(targetPosRef.current, factor);
-      controlsRef.current.target.lerp(targetLookAtRef.current, factor);
+    if (isTransitioningRef.current) {
+      if (reducedMotion) {
+        camera.position.copy(targetPosRef.current);
+        controlsRef.current.target.copy(targetLookAtRef.current);
+        isTransitioningRef.current = false;
+      } else {
+        // Exponential smooth lerp for camera flight
+        const factor = isTouring
+          ? 1 - Math.exp(-2.5 * Math.min(delta, 0.1))
+          : 1 - Math.exp(-5.5 * Math.min(delta, 0.1));
+        camera.position.lerp(targetPosRef.current, factor);
+        controlsRef.current.target.lerp(targetLookAtRef.current, factor);
+
+        // Once settled near preset, stop fighting user mouse orbit controls
+        if (
+          !isTouring &&
+          camera.position.distanceTo(targetPosRef.current) < 0.04 &&
+          controlsRef.current.target.distanceTo(targetLookAtRef.current) < 0.04
+        ) {
+          isTransitioningRef.current = false;
+        }
+      }
     }
+
     controlsRef.current.update();
   });
 
@@ -107,10 +211,14 @@ const CameraController: React.FC<CameraControllerProps> = ({
     <OrbitControls
       ref={controlsRef}
       maxPolarAngle={Math.PI / 2 - 0.04}
-      minDistance={2.5}
-      maxDistance={38}
+      minDistance={2.0}
+      maxDistance={42}
       enableDamping={!reducedMotion}
-      dampingFactor={0.06}
+      dampingFactor={0.08}
+      rotateSpeed={0.8}
+      zoomSpeed={1.0}
+      panSpeed={0.8}
+      screenSpacePanning={true}
     />
   );
 };
@@ -307,24 +415,22 @@ const CourtroomArchitecture: React.FC<{ theme: 'split' | 'light' | 'dark' }> = (
           </mesh>
 
           {/* Sacred Sanskrit Motto in Gleaming Gold */}
-          <Text
+          <CanvasText
             position={[0, -1.05, 0.1]}
-            fontSize={0.28}
-            color="#fbbf24"
-            anchorX="center"
-            anchorY="middle"
-          >
-            YATO DHARMASTHATO JAYAH
-          </Text>
-          <Text
-            position={[0, -1.38, 0.1]}
-            fontSize={0.15}
-            color="#e2d0a0"
-            anchorX="center"
-            anchorY="middle"
-          >
-            SUPREME APPELLATE TRIBUNAL OF DHARMARAKSHA
-          </Text>
+            width={2.8}
+            height={0.28}
+            text="YATO DHARMASTHATO JAYAH"
+            textColor="#fbbf24"
+            fontSize={32}
+          />
+          <CanvasText
+            position={[0, -1.36, 0.1]}
+            width={3.4}
+            height={0.24}
+            text="SUPREME APPELLATE TRIBUNAL OF DHARMARAKSHA"
+            textColor="#e2d0a0"
+            fontSize={18}
+          />
         </group>
       </group>
 
@@ -774,15 +880,14 @@ const RoundTable: React.FC<RoundTableProps> = ({
           <meshStandardMaterial color={goldAccentColor} metalness={0.9} roughness={0.15} />
         </mesh>
         {/* Engraved Dignified Bench Text */}
-        <Text
-          position={[0, 0.015, 0.036]}
-          fontSize={0.062}
-          color="#1a1208"
-          anchorX="center"
-          anchorY="middle"
-        >
-          {`BENCH ${bench.id} · ${bench.name.toUpperCase()}`}
-        </Text>
+        <CanvasText
+          position={[0, 0, 0.036]}
+          width={1.38}
+          height={0.11}
+          text={`BENCH ${bench.id} · ${bench.name.toUpperCase()}`}
+          textColor="#1a1208"
+          fontSize={22}
+        />
       </group>
 
       {/* 10 Animated Specialists Seated around Table */}
@@ -974,24 +1079,17 @@ const EvidenceWell: React.FC<EvidenceWellProps> = ({ onSelect, theme }) => {
             <boxGeometry args={[1.9, 0.22, 0.015]} />
             <meshStandardMaterial color="#d4af37" metalness={0.92} roughness={0.15} />
           </mesh>
-          <Text
-            position={[0, 0.035, 0.012]}
-            fontSize={0.065}
-            color="#1a1208"
-            anchorX="center"
-            anchorY="middle"
-          >
-            CENTRAL EVIDENCE RECORD & EXHIBITS
-          </Text>
-          <Text
-            position={[0, -0.045, 0.012]}
-            fontSize={0.045}
-            color="#3d2817"
-            anchorX="center"
-            anchorY="middle"
-          >
-            HIGH COURT OF RECORD · REGISTRAR'S TABLE
-          </Text>
+          <CanvasText
+            position={[0, 0, 0.012]}
+            width={1.86}
+            height={0.2}
+            text="CENTRAL EVIDENCE RECORD & EXHIBITS"
+            subtext="HIGH COURT OF RECORD · REGISTRAR'S TABLE"
+            textColor="#1a1208"
+            subColor="#3d2817"
+            fontSize={26}
+            subFontSize={18}
+          />
         </group>
 
         {/* Soft Focused Warm Reading Light */}
@@ -1153,24 +1251,17 @@ const PresidingReviewerPodium: React.FC<PresidingReviewerPodiumProps> = ({ onSel
           <boxGeometry args={[2.2, 0.22, 0.015]} />
           <meshStandardMaterial color="#d4af37" metalness={0.92} roughness={0.15} />
         </mesh>
-        <Text
-          position={[0, 0.035, 0.012]}
-          fontSize={0.068}
-          color="#1a1208"
-          anchorX="center"
-          anchorY="middle"
-        >
-          HON'BLE PRESIDING REVIEWER · CHIEF JUSTICE
-        </Text>
-        <Text
-          position={[0, -0.045, 0.012]}
-          fontSize={0.046}
-          color="#3d2817"
-          anchorX="center"
-          anchorY="middle"
-        >
-          SUPREME COMMERCIAL APPELLATE TRIBUNAL
-        </Text>
+        <CanvasText
+          position={[0, 0, 0.012]}
+          width={2.16}
+          height={0.2}
+          text="HON'BLE PRESIDING REVIEWER · CHIEF JUSTICE"
+          subtext="SUPREME COMMERCIAL APPELLATE TRIBUNAL"
+          textColor="#1a1208"
+          subColor="#3d2817"
+          fontSize={26}
+          subFontSize={18}
+        />
       </group>
     </group>
   );
@@ -1233,6 +1324,7 @@ export interface TribunalChamberProps {
   onSelectBench: (benchId: BenchId) => void;
   onSelectSpecialist: (specialistId: string) => void;
   theme?: 'split' | 'light' | 'dark';
+  onOpenScanner?: () => void;
 }
 
 export const TribunalChamber: React.FC<TribunalChamberProps> = ({
@@ -1241,7 +1333,8 @@ export const TribunalChamber: React.FC<TribunalChamberProps> = ({
   selectedSpecialistId,
   onSelectBench,
   onSelectSpecialist,
-  theme = 'split'
+  theme = 'split',
+  onOpenScanner
 }) => {
   const [currentPreset, setCurrentPreset] = useState<CameraPreset>('overall');
   const [is2DFallback, setIs2DFallback] = useState<boolean>(false);
@@ -1359,6 +1452,7 @@ export const TribunalChamber: React.FC<TribunalChamberProps> = ({
         currentActivity={currentActivity}
         onSelectActivity={setCurrentActivity}
         onOpenValidator={() => setShowValidator(true)}
+        onOpenScanner={onOpenScanner}
         milestones={milestones}
         origin={origin}
         isConnected={isConnected}
@@ -1394,32 +1488,34 @@ export const TribunalChamber: React.FC<TribunalChamberProps> = ({
       </button>
 
       {/* WebGL 3D Canvas */}
-      <Suspense fallback={
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', color: '#38bdf8', gap: '8px' }}>
-          <Loader2 style={{ width: 22, height: 22, animation: 'spin 1s linear infinite' }} />
-          <span>Entering Supreme Courtroom Chamber...</span>
-        </div>
-      }>
-        <Canvas
-          camera={{ position: CAMERA_PRESETS.overall.position, fov: 45 }}
-          style={{ width: '100%', height: '100%' }}
-          onCreated={({ gl }) => {
-            setIsLoaded(true);
-            const canvasEl = gl.domElement;
-            const handleContextLost = (e: Event) => {
-              e.preventDefault();
-              console.warn('WebGL Context Lost. Falling back to 2D Chamber view.');
-              setContextLost(true);
-              setIs2DFallback(true);
-            };
-            const handleContextRestored = () => {
-              console.log('WebGL Context Restored.');
-              setContextLost(false);
-            };
-            canvasEl.addEventListener('webglcontextlost', handleContextLost, false);
-            canvasEl.addEventListener('webglcontextrestored', handleContextRestored, false);
-          }}
-        >
+      <Canvas
+        camera={{ position: CAMERA_PRESETS.overall.position, fov: 45 }}
+        style={{ width: '100%', height: '100%' }}
+        dpr={[1, 1.5]}
+        gl={{
+          antialias: true,
+          alpha: false,
+          powerPreference: 'high-performance',
+          preserveDrawingBuffer: false
+        }}
+        onCreated={({ gl }) => {
+          setIsLoaded(true);
+          const canvasEl = gl.domElement;
+          const handleContextLost = (e: Event) => {
+            e.preventDefault();
+            console.warn('WebGL Context Lost. Falling back to 2D Chamber view.');
+            setContextLost(true);
+            setIs2DFallback(true);
+          };
+          const handleContextRestored = () => {
+            console.log('WebGL Context Restored.');
+            setContextLost(false);
+          };
+          canvasEl.addEventListener('webglcontextlost', handleContextLost, false);
+          canvasEl.addEventListener('webglcontextrestored', handleContextRestored, false);
+        }}
+      >
+        <Suspense fallback={null}>
           <fog attach="fog" args={[theme === 'light' ? '#fbf8f2' : '#140c06', 26, 75]} />
           {/* Authentic Indian Courtroom Warm Lighting */}
           <ambientLight intensity={1.6} color="#fff7eb" />
@@ -1480,8 +1576,8 @@ export const TribunalChamber: React.FC<TribunalChamberProps> = ({
             isTouring={isTouring}
             onTourStep={(nextPreset) => setCurrentPreset(nextPreset)}
           />
-        </Canvas>
-      </Suspense>
+        </Suspense>
+      </Canvas>
 
       {/* Floating Dossier Modal when Specialist is Clicked */}
       {modalSpecialist && (

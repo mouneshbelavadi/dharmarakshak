@@ -8,6 +8,7 @@ import { CertifiedDeliveryView } from './components/CertifiedDeliveryView.js';
 import { DocumentsView } from './components/DocumentsView.js';
 import { PresentationView } from './components/PresentationView.js';
 import { DeviceManagementView } from './components/DeviceManagementView.js';
+import { CourtroomCameraScannerModal } from './components/CourtroomCameraScannerModal.js';
 import { CaseRecord, LaptopTheme, UserRole } from '@dharmaraksha/shared-contracts';
 import { BenchId } from '@dharmaraksha/tribunal-definitions';
 import './styles/theme.css';
@@ -72,6 +73,7 @@ export function App() {
   const [isFixture, setIsFixture] = useState<boolean>(true);
   const [selectedBenchId, setSelectedBenchId] = useState<BenchId>('A');
   const [selectedSpecialistId, setSelectedSpecialistId] = useState<string | undefined>(undefined);
+  const [isScannerOpen, setIsScannerOpen] = useState<boolean>(false);
 
   return (
     <div
@@ -100,6 +102,7 @@ export function App() {
         onTogglePresentationMode={() => setIsPresentationMode(!isPresentationMode)}
         isFixture={isFixture}
         onToggleFixture={() => setIsFixture(!isFixture)}
+        onOpenScanner={() => setIsScannerOpen(true)}
       />
 
       {/* Main Courtroom Viewport Area */}
@@ -131,6 +134,7 @@ export function App() {
                 onSelectBench={setSelectedBenchId}
                 onSelectSpecialist={setSelectedSpecialistId}
                 theme={theme}
+                onOpenScanner={() => setIsScannerOpen(true)}
               />
             </div>
           </div>
@@ -166,6 +170,13 @@ export function App() {
           <DeviceManagementView userRole={userRole} isFixture={isFixture} />
         )}
       </main>
+
+      {/* Live High Court Document Camera Scanner & OCR Modal */}
+      <CourtroomCameraScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        theme={theme}
+      />
     </div>
   );
 }

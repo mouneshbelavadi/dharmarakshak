@@ -42,6 +42,7 @@ interface PresentationHeaderProps {
   isFixture: boolean;
   onToggleFixture: () => void;
   onStartTour?: () => void;
+  onOpenScanner?: () => void;
 }
 
 /** Scales-of-Justice SVG crest — inline, no CDN dependency */
@@ -81,6 +82,7 @@ export const PresentationHeader: React.FC<PresentationHeaderProps> = ({
   onTogglePresentationMode,
   isFixture,
   onToggleFixture,
+  onOpenScanner,
 }) => {
   const isLight = theme === 'light';
 
@@ -240,6 +242,30 @@ export const PresentationHeader: React.FC<PresentationHeaderProps> = ({
           </span>
           <span style={{ color: textMuted }}>v{currentCase.currentSnapshotVersion}</span>
         </div>
+
+        {/* Live Document Camera Scanner Button */}
+        <button
+          onClick={onOpenScanner}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            background: 'linear-gradient(135deg, rgba(201, 168, 76, 0.22) 0%, rgba(180, 83, 9, 0.28) 100%)',
+            border: '1px solid #c9a84c',
+            borderRadius: '8px',
+            padding: '5px 12px',
+            fontSize: '11px',
+            fontWeight: 700,
+            color: '#fef08a',
+            cursor: 'pointer',
+            boxShadow: '0 2px 10px rgba(201, 168, 76, 0.25)',
+            transition: 'all 0.15s'
+          }}
+          title="Open Live Courtroom Document Camera Scanner (OCR + Gemini Grounded Answers)"
+        >
+          <Camera size={13} style={{ color: '#fbbf24' }} />
+          <span>Scan Document</span>
+        </button>
 
         {/* Live / Fixture toggle */}
         <button
