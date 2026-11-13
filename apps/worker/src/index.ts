@@ -1,4 +1,8 @@
 import dotenv from 'dotenv';
+export * from './orchestrator.js';
+export * from './routing/routing-planner.js';
+export * from './scheduling/task-claim-store.js';
+export * from './execution/specialist-executor.js';
 import { BackgroundOrchestrator } from './orchestrator.js';
 
 dotenv.config();

@@ -1082,6 +1082,10 @@ export const ALL_SPECIALISTS: SpecialistDefinition[] = [
   ...BENCH_E_SPECIALISTS
 ];
 
+export const ALL_SPECIALISTS_MAP: Map<string, SpecialistDefinition> = new Map(
+  ALL_SPECIALISTS.map(s => [s.id, s])
+);
+
 /**
  * Registry Lookup Helpers
  */

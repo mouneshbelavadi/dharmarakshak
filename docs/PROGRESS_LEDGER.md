@@ -15,7 +15,7 @@ This ledger tracks the status, primary deliverables, and verification gates acro
 | **09** | **Multiple-Document Intake & OCR** | Multi-document grouping (agreement + receipt + annexure), parent-annexure linkage, page-by-page intake, page reordering, rotation, recapture, Indian script OCR (Kannada, Devanagari, Latin), full text (>1,000 chars without truncation), table & negation detection, uncertainty audit trail & review text correction, duplicate page detection without silent deletion, cross-document discrepancy detection, immutable case-document snapshots (v1 -> v2) with combined fingerprint, stale finding detection, and automated 8-point verification suite. | Document boundaries and page order survive capture/retry; every extracted passage points to its actual document/version/page; changes cannot silently reuse stale findings. | **COMPLETED** |
 | **10** | **Source Retrieval & Evidence Provenance** | Case-restricted evidence indexing (BM25 lexical retrieval), curated Indian statutory corpus (Transfer of Property Act, Contract Act, Rent Acts, Consumer Protection), landmark Supreme Court precedents, location anchors (`doc:...`, `statute:...`, `precedent:...`), missing annexure & uncurated statute limitations, stale/repealed law detection, wrong jurisdiction filtering, and automated 10-point verification suite. | Citations point to verified sections/paragraphs; missing law acknowledged. | **COMPLETED** |
 | **11** | **Fifty Specialist Identities & Bench Registry** | Complete A01–E10 registry across 5 benches (10 specialists per bench), Chair 10th seat enforcement, Messenger & Presiding Reviewer separation, persistent seat & appearance IDs, role contract validator, multi-role perspective demonstrations (Tenancy, Employment, Citation, Adversarial, Plain Language), unselected role visibility without faked model calls, and automated 8-point verification suite. | Exactly fifty unique analyst IDs exist, ten in each bench; role, seat, finding and prompt identifiers agree without any imported registry or historical data. | **COMPLETED** |
-| **12** | **Bench B: Rights & Obligations (10 Specialists)** | Specialists B01–B10, domain contract analysis (tenancy, employment, sale, debt, consumer), Chair B10 packet. | Bench B accurately maps duties, lock-in clauses, and default remedies. | Pending |
+| **12** | **Durable Routing & Bounded Specialist Execution** | Persisted routing plans across all 50 specialists based on document type, uncertainty, jurisdiction, and questions; Stage progression (Stage 1 Bench A -> Stage 2 B/C -> Stage 3 D -> Stage 4 E); durable worker scheduling with claims, leases, deadlines, and retry budgets; independent first assessment and bounded contradiction round without agent voting; and automated 8-point verification suite. | Work resumes after restart without duplicating accepted findings; failures remain failed or partial; routing follows role eligibility and dependencies rather than arbitrary positional truncation. | **COMPLETED** |
 | **13** | **Bench C: Indian Legal Sources (10 Specialists)** | Specialists C01–C10, statute retrieval, precedent relevance, jurisdiction checking, Citation Verifier C09. | C09 validates act sections and flags unverified citations or state variations. | Pending |
 | **14** | **Bench D: Adversarial Risk (10 Specialists)** | Specialists D01–D10, holder advocate vs counterparty advocate, ambiguity detection, financial penalties, Chair D10 packet. | Bench D highlights one-sided terms and calculates uncapped exposures. | Pending |
 | **15** | **Bench E: Verification & Plain Language (10 Specialists)** | Specialists E01–E10, audit trail checking, arithmetic verifier, plain-language translation, Chair E10 packet. | Bench E flags mathematical mismatches and removes unverified assertions. | Pending |
@@ -251,5 +251,48 @@ This ledger tracks the status, primary deliverables, and verification gates acro
 
 - **Verification Gate**:
   - All 8 acceptance tests executed and passed cleanly (`Exit Code: 0`).
+  - Monorepo typecheck passed with 0 errors across all 7 workspaces (`npm run typecheck`).
+  - Monorepo build passed across all 7 workspaces (`npm run build`).
+
+---
+
+## Phase 12 Execution Summary
+
+- **Deliverables**:
+  - `RoutingPlanner` (`apps/worker/src/routing/routing-planner.ts`):
+    - Computes deterministic, persisted routing plans across all 50 specialists (`A01` through `E10`).
+    - Evaluates document categories, factual uncertainty (low OCR confidence, blurred pages, discrepancies), territorial jurisdiction (Karnataka, Maharashtra, Delhi, Central), and questions raised.
+    - Persists explicit selection or exclusion rationales for all 50 specialists (e.g. `B02` skipped because case has no employment contracts, `B07` selected when bank guarantee/deposit instruments are detected).
+    - Enforces 4-stage dependency progression: Stage 1 (Bench A Evidence Grounding) -> Stage 2 (Bench B Substantive Obligations & Bench C Legal Authority) -> Stage 3 (Bench D Adversarial Challenges) -> Stage 4 (Bench E Verification, Synthesis & Plain Language).
+  - `TaskClaimStore` (`apps/worker/src/scheduling/task-claim-store.ts`):
+    - Durable scheduling store managing task claims, attempts, leases, deadlines, and retry budgets.
+    - Atomically claims eligible candidate tasks respecting dependency ordering, global concurrency quota (`globalConcurrencyQuota`), and per-case concurrency quota (`perCaseConcurrencyQuota`).
+    - Periodic lease renewal / heartbeat preventing premature lease expiries.
+    - Crash recovery routine (`recoverExpiredLeases`): inspects orphaned leases from dead workers, safely re-queuing retryable tasks while strictly ensuring previously completed tasks with accepted findings are **never duplicated**.
+    - Graceful cancellation (`cancelRunTasks`): marks unfinished tasks with `status: 'cancelled'` and halts further scheduling.
+  - `SpecialistExecutor` (`apps/worker/src/execution/specialist-executor.ts`):
+    - Executes specialist role instructions and extracts verbatim evidence citations.
+    - Captures and stores each specialist's **independent first assessment** (`initialAssessment`) before contradiction analysis.
+    - Strict output contract validation via `SpecialistContractValidator.validateFindingOutput`.
+    - Handles bounded errors:
+      - Rate limits (`429`): captures retryable rate-limit errors and decrements retry budget.
+      - Malformed outputs: catches missing citations or invalid severities, requesting contract-conforming output on retry.
+      - Unreadable pages: detects degraded scan quality on blurred pages (`qualityScore < 0.3`) and outputs explicit `evidence_gap` limitations with zero text hallucination.
+    - Bounded contradiction round (in Stage 4 via `E02` Contradiction Resolver): preserves opposing viewpoints (e.g. `D01` Holder Advocate vs `D02` Counterparty Advocate on deposit penalties) without agent voting or invented majority percentages.
+  - `BackgroundOrchestrator` (`apps/worker/src/orchestrator.ts`):
+    - Daemon coordinating the end-to-end execution pipeline with lifecycle controls (`start`, `stop`, `initializeRun`, `processNextBatch`, `runUntilComplete`, `cancelRun`, `recoverAndResume`).
+  - Automated 8-Point Verification Suite (`apps/worker/src/tests/phase12-verification.ts`):
+    1. Tenancy case routing, persisted rationales, and 4-stage dependency ordering.
+    2. Employment/IP case routing and persisted exclusion rationales.
+    3. Mixed document set routing without arbitrary positional truncation.
+    4. Unreadable page handling with explicit evidence-gap limitation and zero hallucination.
+    5. Rate limit (429) simulation, backoff, and retry budget decrementing.
+    6. Malformed output rejection and contract enforcement.
+    7. Worker crash recovery without duplicating already-accepted findings.
+    8. Mid-execution run cancellation with clean resource halting.
+
+- **Verification Gate**:
+  - All 8 acceptance tests executed and passed cleanly (`Exit Code: 0`).
+  - Phase 11 verification suite verified cleanly (`Exit Code: 0`).
   - Monorepo typecheck passed with 0 errors across all 7 workspaces (`npm run typecheck`).
   - Monorepo build passed across all 7 workspaces (`npm run build`).
