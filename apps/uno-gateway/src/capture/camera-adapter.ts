@@ -195,3 +195,4 @@ export const activeCameraAdapter: ICameraAdapter =
   process.env.UNO_Q_PHYSICAL_CAMERA === 'true'
     ? new HardwareUvcCameraAdapter(process.env.UVC_CAMERA_DEVICE_PATH || '/dev/video0')
     : new SimulatedCameraAdapter();
+

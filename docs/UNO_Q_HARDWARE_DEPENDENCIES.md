@@ -111,3 +111,4 @@ journalctl -u dharmaraksha-gateway -f
 ```
 
 Restart policy guarantees automatic recovery within 5 seconds if an unexpected hardware disconnect or process failure occurs.
+
