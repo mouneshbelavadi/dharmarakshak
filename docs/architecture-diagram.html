@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DHARMARAKSHA — Complete Architecture Blueprint</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #0b0f19;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      padding: 32px;
+      min-width: 1800px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .title {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #92400e 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      font-size: 15px;
+      color: #94a3b8;
+    }
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 0 4px;
+    }
+    .badge-amber { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .badge-emerald { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-purple { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+
+    .grid-top {
+      display: grid;
+      grid-template-columns: 340px 80px 380px 80px 1fr;
+      align-items: stretch;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .connector-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      font-size: 12px;
+      text-align: center;
+      font-weight: 600;
+    }
+    .arrow-line {
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, #3b82f6, #f59e0b);
+      position: relative;
+      margin: 12px 0;
+    }
+    .arrow-line::after {
+      content: '';
+      position: absolute;
+      right: -2px;
+      top: -5px;
+      width: 0;
+      height: 0;
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid transparent;
+      border-left: 10px solid #f59e0b;
+    }
+
+    .card {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid #1f2937;
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .feature-item {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 8px;
+      font-size: 12.5px;
+    }
+    .feature-item strong { color: #38bdf8; }
+    .feature-item.warn strong { color: #f59e0b; }
+    .feature-item.purple strong { color: #c084fc; }
+    .feature-item.emerald strong { color: #34d399; }
+
+    /* Chamber Grid */
+    .chamber-section {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .benches-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .bench-card {
+      background: #182234;
+      border-radius: 8px;
+      padding: 14px;
+      border: 1px solid #2d3b55;
+    }
+    .bench-card.bench-a { border-top: 4px solid #38bdf8; }
+    .bench-card.bench-b { border-top: 4px solid #34d399; }
+    .bench-card.bench-c { border-top: 4px solid #fbbf24; }
+    .bench-card.bench-d { border-top: 4px solid #f87171; }
+    .bench-card.bench-e { border-top: 4px solid #c084fc; }
+
+    .bench-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .bench-a .bench-title { color: #38bdf8; }
+    .bench-b .bench-title { color: #34d399; }
+    .bench-c .bench-title { color: #fbbf24; }
+    .bench-d .bench-title { color: #f87171; }
+    .bench-e .bench-title { color: #c084fc; }
+
+    .specialist-list {
+      list-style: none;
+      font-size: 11.5px;
+      color: #cbd5e1;
+    }
+    .specialist-list li {
+      padding: 3.5px 0;
+      border-bottom: 1px solid #243048;
+      display: flex;
+      justify-content: space-between;
+    }
+    .specialist-list li:last-child {
+      border-bottom: none;
+      font-weight: 700;
+      color: #f8fafc;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 4px 6px;
+      border-radius: 4px;
+      margin-top: 4px;
+    }
+    .spec-code { font-weight: 700; font-family: monospace; color: #94a3b8; }
+
+    /* Officials Banner */
+    .officials-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #334155;
+    }
+    .official-card {
+      background: #1e1b4b;
+      border: 1px solid #4338ca;
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .official-icon {
+      font-size: 24px;
+      background: #312e81;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .official-name { font-weight: 700; font-size: 14px; color: #a5b4fc; }
+    .official-desc { font-size: 11.5px; color: #cbd5e1; margin-top: 2px; }
+
+    /* Bottom Grid */
+    .grid-bottom {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+    .db-table-badge {
+      display: inline-block;
+      font-family: monospace;
+      font-size: 11px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      padding: 2px 7px;
+      border-radius: 4px;
+      margin: 2px 3px 2px 0;
+      color: #38bdf8;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="title">DHARMARAKSHA — COMPLETE SYSTEM ARCHITECTURE</div>
+    <div class="subtitle">
+      Indian Legal-Document Assistance System &middot; 3-Tier Edge-to-Cloud Distributed Architecture
+      <span class="badge badge-amber">5 Benches &middot; 50 Specialists</span>
+      <span class="badge badge-blue">UNO Q Hardware Kiosk</span>
+      <span class="badge badge-emerald">3D Laptop Chamber</span>
+      <span class="badge badge-purple">Sarvam AI + Gemini</span>
+    </div>
+  </div>
+
+  <!-- TOP 3-TIER GRID -->
+  <div class="grid-top">
+    <!-- TIER 1 -->
+    <div class="card" style="border-top: 4px solid #38bdf8;">
+      <div class="card-header">
+        <div class="card-title">
+          <span>📱</span> TIER 1: KIOSK PHONE
+        </div>
+        <span class="badge badge-blue">apps/phone-web</span>
+      </div>
+      <div class="feature-item">
+        <strong>Surface:</strong> Portrait 2D Mobile Web Browser<br>
+        <span style="color: #94a3b8; font-size: 11px;">(Zero 3D/Three.js assets in bundle)</span>
+      </div>
+      <div class="feature-item">
+        <strong>RFID Tap Screen:</strong> Card binding & tap detection with 3000ms debounce
+      </div>
+      <div class="feature-item">
+        <strong>Multilingual Consent:</strong> Kannada, Hindi, Tamil, Telugu, English
+      </div>
+      <div class="feature-item">
+        <strong>Multi-Doc Scanner:</strong> Page review, reorder, rotate, recapture, delete, annexure linking
+      </div>
+      <div class="feature-item">
+        <strong>Grounded Q&A UI:</strong> Live captions, microphone/speaker, typed turns
+      </div>
+      <div class="feature-item">
+        <strong>Referenced Report View:</strong> Findings, severity, delivery triggers
+      </div>
+      <div class="feature-item warn">
+        <strong>Security:</strong> HttpOnly <code>dhr_pair</code> strict cookie, CSRF token, zero provider keys
+      </div>
+    </div>
+
+    <!-- HOP 1 -->
+    <div class="connector-col">
+      <div>HOP 1</div>
+      <div class="arrow-line"></div>
+      <div style="font-size: 11px; line-height: 1.3;">
+        HTTPS (ngrok / LAN)<br>
+        Port 5000<br>
+        Single-Use Pairing Code (<code>DK-XXXXXX</code>)
+      </div>
+    </div>
+
+    <!-- TIER 2 -->
+    <div class="card" style="border-top: 4px solid #f59e0b;">
+      <div class="card-header">
+        <div class="card-title">
+          <span>⚡</span> TIER 2: UNO Q GATEWAY
+        </div>
+        <span class="badge badge-amber">apps/uno-gateway</span>
+      </div>
+      <div class="feature-item">
+        <strong>Hardware Core:</strong> Arduino UNO Q Linux (ARM64) + Microcontroller Bridge
+      </div>
+      <div class="feature-item">
+        <strong>Overhead Camera Adapter:</strong> <code>/dev/video0</code> (UVC 1080p still capture + 640x480 preview)
+      </div>
+      <div class="feature-item">
+        <strong>RFID Reader Adapter:</strong> RC522 / USB serial reader daemon with event deduplication
+      </div>
+      <div class="feature-item">
+        <strong>Bounded Spool Service:</strong> SQLite buffer (Max 20 pages / 50MB ceiling, disk-pressure auto-guard)
+      </div>
+      <div class="feature-item">
+        <strong>Capture Manager:</strong> Cryptographic SHA-256 pre-hashing, stable page identities, offline recovery
+      </div>
+      <div class="feature-item">
+        <strong>Tunnel Supervisor:</strong> Manages ngrok HTTPS tunnel / LAN HTTPS daemon
+      </div>
+      <div class="feature-item warn">
+        <strong>Auth Credential:</strong> Scoped Device API Key (<code>X-Dharmaraksha-Device-Key</code>)
+      </div>
+    </div>
+
+    <!-- HOP 2 -->
+    <div class="connector-col">
+      <div>HOP 2</div>
+      <div class="arrow-line"></div>
+      <div style="font-size: 11px; line-height: 1.3;">
+        HTTP/HTTPS REST<br>
+        Port 4000<br>
+        Multipart Streaming<br>
+        + SSE Events
+      </div>
+    </div>
+
+    <!-- TIER 3 -->
+    <div class="card" style="border-top: 4px solid #10b981;">
+      <div class="card-header">
+        <div class="card-title">
+          <span>💻</span> TIER 3: LAPTOP HOST & 3D CHAMBER
+        </div>
+        <span class="badge badge-emerald">apps/laptop-web &bull; apps/main-api &bull; apps/worker</span>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div>
+          <div class="feature-item emerald">
+            <strong>3D Tribunal Chamber:</strong> Three.js / React Three Fiber / Drei (60 FPS)<br>
+            <span style="font-size: 11px; color: #94a3b8;">5 Round Tables, 50 seats, brass inlays, central evidence well, elevated podium</span>
+          </div>
+          <div class="feature-item">
+            <strong>Split Workspace:</strong> Warm Paper Folio (light) + Ink Chamber (dark)
+          </div>
+          <div class="feature-item">
+            <strong>Evaluator Presentation:</strong> Clean demo view (zero raw secrets/logs)
+          </div>
+          <div class="feature-item">
+            <strong>2D Accessible Fallback:</strong> Full inspection usable without WebGL
+          </div>
+        </div>
+        <div>
+          <div class="feature-item">
+            <strong>Main API Server (Port 4000):</strong> Cases, Sessions, Cards, Documents, Snapshots
+          </div>
+          <div class="feature-item">
+            <strong>OCR Engine:</strong> Indian scripts (Kannada, Devanagari, Latin), tables, negations, >1000 chars
+          </div>
+          <div class="feature-item purple">
+            <strong>Grounded Q&A Engine:</strong> Ambiguity clarification, comparison logic, absent info guard, targeted review
+          </div>
+          <div class="feature-item">
+            <strong>Event Ledger:</strong> Monotonic append-only log with real-time SSE streaming
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 50 SPECIALISTS TRIBUNAL CHAMBER -->
+  <div class="chamber-section">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h2 style="font-size: 18px; font-weight: 800; color: #f8fafc; letter-spacing: 0.5px;">
+          ⚖️ THE 5 BENCHES &amp; 50 SPECIALIST IDENTITIES
+        </h2>
+        <p style="font-size: 12.5px; color: #94a3b8; margin-top: 2px;">
+          Defined in <code>@dharmaraksha/tribunal-definitions</code> &middot; 4-Stage Dependency DAG (Stage 1: A &rarr; Stage 2: B &amp; C &rarr; Stage 3: D &rarr; Stage 4: E) &middot; Independent Assessments without Agent Voting
+        </p>
+      </div>
+      <div>
+        <span class="badge badge-blue">Stage 1: Evidence</span>
+        <span class="badge badge-emerald">Stage 2: Obligations</span>
+        <span class="badge badge-amber">Stage 2: Sources</span>
+        <span class="badge badge-purple" style="border-color: #f87171; color: #f87171;">Stage 3: Risk</span>
+        <span class="badge badge-purple">Stage 4: Verification</span>
+      </div>
+    </div>
+
+    <div class="benches-grid">
+      <!-- BENCH A -->
+      <div class="bench-card bench-a">
+        <div class="bench-title">
+          <span>BENCH A: EVIDENCE</span>
+          <span class="badge badge-blue">A01–A10</span>
+        </div>
+        <ul class="specialist-list">
+          <li><span>Capture Quality</span> <span class="spec-code">A01</span></li>
+          <li><span>Page Continuity</span> <span class="spec-code">A02</span></li>
+          <li><span>Text Fidelity</span> <span class="spec-code">A03</span></li>
+          <li><span>Language Analyst</span> <span class="spec-code">A04</span></li>
+          <li><span>Parties &amp; Capacities</span> <span class="spec-code">A05</span></li>
+          <li><span>Dates &amp; Amounts</span> <span class="spec-code">A06</span></li>
+          <li><span>Clause Structure</span> <span class="spec-code">A07</span></li>
+          <li><span>Document Consistency</span> <span class="spec-code">A08</span></li>
+          <li><span>Sensitive Data</span> <span class="spec-code">A09</span></li>
+          <li><span>Evidence Chair (Packet)</span> <span class="spec-code">A10</span></li>
+        </ul>
+      </div>
+
+      <!-- BENCH B -->
+      <div class="bench-card bench-b">
+        <div class="bench-title">
+          <span>BENCH B: OBLIGATIONS</span>
+          <span class="badge badge-emerald">B01–B10</span>
+        </div>
+        <ul class="specialist-list">
+          <li><span>General Contract</span> <span class="spec-code">B01</span></li>
+          <li><span>Employment Analyst</span> <span class="spec-code">B02</span></li>
+          <li><span>Tenancy Analyst</span> <span class="spec-code">B03</span></li>
+          <li><span>Property Transaction</span> <span class="spec-code">B04</span></li>
+          <li><span>Consumer &amp; Service</span> <span class="spec-code">B05</span></li>
+          <li><span>Small-Business MSME</span> <span class="spec-code">B06</span></li>
+          <li><span>Lending &amp; Security</span> <span class="spec-code">B07</span></li>
+          <li><span>Data &amp; IP Analyst</span> <span class="spec-code">B08</span></li>
+          <li><span>Exit &amp; Dispute</span> <span class="spec-code">B09</span></li>
+          <li><span>Obligations Chair (Packet)</span> <span class="spec-code">B10</span></li>
+        </ul>
+      </div>
+
+      <!-- BENCH C -->
+      <div class="bench-card bench-c">
+        <div class="bench-title">
+          <span>BENCH C: LEGAL SOURCES</span>
+          <span class="badge badge-amber">C01–C10</span>
+        </div>
+        <ul class="specialist-list">
+          <li><span>Jurisdiction Analyst</span> <span class="spec-code">C01</span></li>
+          <li><span>Statute Retrieval</span> <span class="spec-code">C02</span></li>
+          <li><span>State-Law Analyst</span> <span class="spec-code">C03</span></li>
+          <li><span>Rules &amp; Notifications</span> <span class="spec-code">C04</span></li>
+          <li><span>Temporal Applicability</span> <span class="spec-code">C05</span></li>
+          <li><span>Precedent Retrieval</span> <span class="spec-code">C06</span></li>
+          <li><span>Precedent Relevance</span> <span class="spec-code">C07</span></li>
+          <li><span>Contrary Authority</span> <span class="spec-code">C08</span></li>
+          <li><span>Citation Verifier</span> <span class="spec-code">C09</span></li>
+          <li><span>Sources Chair (Packet)</span> <span class="spec-code">C10</span></li>
+        </ul>
+      </div>
+
+      <!-- BENCH D -->
+      <div class="bench-card bench-d">
+        <div class="bench-title">
+          <span>BENCH D: ADVERSARIAL RISK</span>
+          <span class="badge" style="background: rgba(248, 113, 113, 0.15); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.3);">D01–D10</span>
+        </div>
+        <ul class="specialist-list">
+          <li><span>Doc-Holder Advocate</span> <span class="spec-code">D01</span></li>
+          <li><span>Counterparty Advocate</span> <span class="spec-code">D02</span></li>
+          <li><span>Ambiguity Analyst</span> <span class="spec-code">D03</span></li>
+          <li><span>Financial Exposure</span> <span class="spec-code">D04</span></li>
+          <li><span>Deadline &amp; Default</span> <span class="spec-code">D05</span></li>
+          <li><span>Balance &amp; Fairness</span> <span class="spec-code">D06</span></li>
+          <li><span>Evidence-Gap Analyst</span> <span class="spec-code">D07</span></li>
+          <li><span>Red-Flag Analyst</span> <span class="spec-code">D08</span></li>
+          <li><span>Scenario Analyst</span> <span class="spec-code">D09</span></li>
+          <li><span>Risk Chair (Packet)</span> <span class="spec-code">D10</span></li>
+        </ul>
+      </div>
+
+      <!-- BENCH E -->
+      <div class="bench-card bench-e">
+        <div class="bench-title">
+          <span>BENCH E: VERIFICATION</span>
+          <span class="badge badge-purple">E01–E10</span>
+        </div>
+        <ul class="specialist-list">
+          <li><span>Finding-to-Evidence</span> <span class="spec-code">E01</span></li>
+          <li><span>Contradiction Resolver</span> <span class="spec-code">E02</span></li>
+          <li><span>Arithmetic &amp; Timeline</span> <span class="spec-code">E03</span></li>
+          <li><span>Coverage Auditor</span> <span class="spec-code">E04</span></li>
+          <li><span>Plain-Language Editor</span> <span class="spec-code">E05</span></li>
+          <li><span>Multilingual Fidelity</span> <span class="spec-code">E06</span></li>
+          <li><span>Clarification Planner</span> <span class="spec-code">E07</span></li>
+          <li><span>Human-Review Triage</span> <span class="spec-code">E08</span></li>
+          <li><span>Report Privacy Review</span> <span class="spec-code">E09</span></li>
+          <li><span>Verification Chair (Packet)</span> <span class="spec-code">E10</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- CHAMBER OFFICIALS -->
+    <div class="officials-bar">
+      <div class="official-card">
+        <div class="official-icon">📬</div>
+        <div>
+          <div class="official-name">DETERMINISTIC MESSENGER (CHAMBER COURIER)</div>
+          <div class="official-desc">
+            Deterministic packet validator with SHA-256 integrity checks, deduplication (<code>duplicate_ignored</code>), and physical transit path event emission. Non-blocking backend execution.
+          </div>
+        </div>
+      </div>
+      <div class="official-card">
+        <div class="official-icon">🏛️</div>
+        <div>
+          <div class="official-name">AI PRESIDING REVIEWER (SYNTHESIS PODIUM)</div>
+          <div class="official-desc">
+            Consolidates verified packets into executive summary, core obligations, material concerns, questions for visitor, and limitations. Preserves genuine adversarial dissent (D01 vs D02).
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM GRID: PERSISTENCE, WORKER, INTEGRATIONS -->
+  <div class="grid-bottom">
+    <!-- POSTGRESQL & STORAGE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span>🗄️</span> CENTRAL PERSISTENCE &amp; STORAGE</div>
+        <span class="badge badge-blue">PostgreSQL + Disk</span>
+      </div>
+      <div class="feature-item">
+        <strong>PostgreSQL 15+ (19 Authoritative Relational Tables):</strong><br>
+        <div style="margin-top: 6px;">
+          <span class="db-table-badge">cases</span>
+          <span class="db-table-badge">sessions</span>
+          <span class="db-table-badge">rfid_cards</span>
+          <span class="db-table-badge">documents</span>
+          <span class="db-table-badge">document_pages</span>
+          <span class="db-table-badge">document_snapshots</span>
+          <span class="db-table-badge">specialist_tasks</span>
+          <span class="db-table-badge">task_claims</span>
+          <span class="db-table-badge">findings</span>
+          <span class="db-table-badge">adversarial_contradictions</span>
+          <span class="db-table-badge">bench_packets</span>
+          <span class="db-table-badge">presiding_summaries</span>
+          <span class="db-table-badge">event_ledger</span>
+          <span class="db-table-badge">idempotency_keys</span>
+          <span class="db-table-badge">qa_turns</span>
+          <span class="db-table-badge">reports</span>
+          <span class="db-table-badge">devices</span>
+        </div>
+      </div>
+      <div class="feature-item warn">
+        <strong>Private Object Storage:</strong> <code>./storage/documents/{caseId}/{docId}/</code> (AES-256 encrypted at rest, strict session authorization, path traversal guard)
+      </div>
+      <div class="feature-item">
+        <strong>Curated Indian Statutory Corpus:</strong> Transfer of Property Act 1882, Indian Contract Act 1872, Rent Acts, Consumer Protection Act 2019, Supreme Court Judgments
+      </div>
+    </div>
+
+    <!-- WORKER & SCHEDULER -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span>⚙️</span> WORKER ENGINE &amp; PIPELINES</div>
+        <span class="badge badge-emerald">apps/worker</span>
+      </div>
+      <div class="feature-item emerald">
+        <strong>Durable Worker Scheduler:</strong> Task claim leases, 30s timeouts, retry budgets, crash recovery without duplicate findings
+      </div>
+      <div class="feature-item">
+        <strong>BM25 Lexical Retrieval:</strong> Case-restricted index, verbatim text extraction, page and section anchor linking (<code>doc:...</code>, <code>statute:...</code>)
+      </div>
+      <div class="feature-item">
+        <strong>Post-Synthesis Citation Validator:</strong> Validates every cited reference against stored document pages; publication policy enforcement (strict vs partial)
+      </div>
+      <div class="feature-item purple">
+        <strong>Statutory Legal Disclaimer:</strong> Mandatory enforcement stating preliminary AI assistance, NOT formal human legal advice or advocate opinion
+      </div>
+      <div class="feature-item">
+        <strong>Targeted Q&A Tasks:</strong> Solves new legal questions by dispatching specific specialists (e.g. B09) without restarting all 50 agents
+      </div>
+    </div>
+
+    <!-- CLOUD INTEGRATIONS -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span>☁️</span> CLOUD AI &amp; DELIVERY ADAPTERS</div>
+        <span class="badge badge-purple">Remote APIs Only</span>
+      </div>
+      <div class="feature-item purple">
+        <strong>Google Gemini 1.5 / 2.0:</strong> Multi-document legal reasoning, adversarial analysis, Presiding Reviewer synthesis (strict zero-fabrication prompt contracts)
+      </div>
+      <div class="feature-item emerald">
+        <strong>Sarvam AI Speech Engine:</strong> Native Indian-language Speech-to-Text (STT) and Text-to-Speech (TTS) with Indian accents (Kannada, Hindi, etc.)
+      </div>
+      <div class="feature-item">
+        <strong>Telegram Bot API:</strong> Explicit visitor-triggered case report delivery and notification channel
+      </div>
+      <div class="feature-item">
+        <strong>Google Drive Export:</strong> OAuth 2.0 authorized PDF report upload to visitor's private Google Drive
+      </div>
+      <div class="feature-item">
+        <strong>Gmail SMTP Dispatch:</strong> Verified App-Password email sender for final referenced report dispatch
+      </div>
+      <div class="feature-item warn">
+        <strong>Strict Privacy Cleanup:</strong> Card return/session termination immediately revokes phone pairing and purges volatile audio/tokens
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
