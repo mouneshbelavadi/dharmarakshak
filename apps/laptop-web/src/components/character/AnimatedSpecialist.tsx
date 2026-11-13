@@ -138,3 +138,4 @@ export const AnimatedSpecialist: React.FC<AnimatedSpecialistProps> = ({
     </group>
   );
 };
+

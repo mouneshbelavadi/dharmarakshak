@@ -98,3 +98,4 @@ The 50 specialist appearances are deterministically generated from their Phase 1
 - **Foot Dais Placement**: Feet bones positioned at `y = 0.02m`, resting flat on the raised floor dais.
 - **Table Clearance**: Chest forward lean bounded to max 15°, preventing character torso penetration through table surface (`radius = 1.8m`, `y = 0.42m`).
 - **Hand / Prop Alignment**: Hand resting positions during reading and note taking clamped to table top plane (`y = 0.52m`).
+

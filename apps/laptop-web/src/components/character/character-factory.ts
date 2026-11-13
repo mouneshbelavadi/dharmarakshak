@@ -253,17 +253,58 @@ export class CharacterFactory {
     torsoMesh.position.set(0, 0, 0);
     chestBone.add(torsoMesh);
 
-    // Bench Accent Tie / Lapel ribbon
-    const tieGeo = new THREE.BoxGeometry(0.08, 0.24, 0.02);
-    const accentMat = new THREE.MeshStandardMaterial({
-      color: appearance.accentColor,
-      emissive: appearance.accentColor,
-      emissiveIntensity: 0.3,
-      roughness: 0.4
+    // ─── Indian Advocate Attire: White Shirt Collar & Two White Legal Bands ───
+    // White formal shirt collar at the neck
+    const collarGeo = new THREE.BoxGeometry(0.14, 0.05, 0.06);
+    const whiteMat = new THREE.MeshStandardMaterial({
+      color: '#ffffff',
+      roughness: 0.3
     });
-    const tieMesh = new THREE.Mesh(tieGeo, accentMat);
-    tieMesh.position.set(0, -0.04, 0.12);
-    chestBone.add(tieMesh);
+    const collarMesh = new THREE.Mesh(collarGeo, whiteMat);
+    collarMesh.position.set(0, 0.16, 0.10);
+    chestBone.add(collarMesh);
+
+    // Iconic Indian Advocate White Tabs / Bands (Two vertical white bands)
+    const bandGeo = new THREE.BoxGeometry(0.035, 0.16, 0.015);
+    const leftBand = new THREE.Mesh(bandGeo, whiteMat);
+    leftBand.position.set(-0.024, 0.06, 0.125);
+    chestBone.add(leftBand);
+
+    const rightBand = new THREE.Mesh(bandGeo, whiteMat);
+    rightBand.position.set(0.024, 0.06, 0.125);
+    chestBone.add(rightBand);
+
+    // Bench Accent Tie / Lapel Ribbon / Judicial Stole
+    if (appearance.id === 'presiding-reviewer') {
+      // Chief Justice Gold Damask Judicial Stole
+      const stoleGeo = new THREE.BoxGeometry(0.05, 0.36, 0.02);
+      const goldStoleMat = new THREE.MeshStandardMaterial({
+        color: '#fbbf24',
+        emissive: '#d97706',
+        emissiveIntensity: 0.4,
+        roughness: 0.3,
+        metalness: 0.6
+      });
+      const leftStole = new THREE.Mesh(stoleGeo, goldStoleMat);
+      leftStole.position.set(-0.11, -0.02, 0.12);
+      chestBone.add(leftStole);
+
+      const rightStole = new THREE.Mesh(stoleGeo, goldStoleMat);
+      rightStole.position.set(0.11, -0.02, 0.12);
+      chestBone.add(rightStole);
+    } else {
+      // Bench Color Lapel Accent
+      const lapelGeo = new THREE.BoxGeometry(0.03, 0.22, 0.015);
+      const accentMat = new THREE.MeshStandardMaterial({
+        color: appearance.accentColor,
+        emissive: appearance.accentColor,
+        emissiveIntensity: 0.4,
+        roughness: 0.4
+      });
+      const lapelMesh = new THREE.Mesh(lapelGeo, accentMat);
+      lapelMesh.position.set(-0.12, -0.02, 0.115);
+      chestBone.add(lapelMesh);
+    }
 
     // Chair Gold Insignia (for Bench Chairs)
     if (appearance.isChair) {
@@ -410,3 +451,4 @@ export class CharacterFactory {
     return SkeletonUtils.clone(sourceGroup) as THREE.Group;
   }
 }
+

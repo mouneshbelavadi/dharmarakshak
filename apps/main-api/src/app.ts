@@ -10,6 +10,11 @@ import { rfidRouter } from './routes/rfid.js';
 import { retrievalRouter } from './routes/retrieval.js';
 import { qaRouter } from './routes/qa.js';
 import { reportsRouter } from './routes/reports.js';
+import { presentationRouter } from './routes/presentation.js';
+import { speechRouter } from './routes/speech.js';
+import { telegramRouter } from './routes/telegram.js';
+import { driveRouter } from './routes/drive.js';
+import { emailRouter } from './routes/email.js';
 
 export function createApp() {
   const app = express();
@@ -35,6 +40,11 @@ export function createApp() {
   app.use('/api/v1', retrievalRouter);
   app.use('/api/v1', qaRouter);
   app.use('/api/v1', reportsRouter);
+  app.use('/api/v1', presentationRouter);
+  app.use('/api/v1', speechRouter);
+  app.use('/api/v1', telegramRouter);
+  app.use('/api/v1', driveRouter);
+  app.use('/api/v1', emailRouter);
 
   // Root status endpoint
   app.get('/', (_req, res) => {

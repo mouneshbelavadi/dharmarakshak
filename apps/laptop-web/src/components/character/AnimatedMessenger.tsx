@@ -118,3 +118,4 @@ export const AnimatedMessenger: React.FC<AnimatedMessengerProps> = ({
     </group>
   );
 };
+

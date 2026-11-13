@@ -22,58 +22,58 @@ export const CAMERA_PRESETS: Record<CameraPreset, CameraPresetConfig> = {
   overall: {
     id: 'overall',
     label: 'Overall Chamber',
-    description: 'High-angle perspective of the complete 50-specialist chamber, evidence well, and presiding dais',
-    position: [0, 14.0, 16.0],
-    target: [0, 0.5, 0]
+    description: 'Perspective of the grand 50-specialist chamber, central bar, and presiding dais',
+    position: [0, 6.5, 14.5],
+    target: [0, 1.8, -1.0]
   },
   'bench-A': {
     id: 'bench-A',
     label: 'Bench A (Evidence)',
     description: 'Close inspection of Bench A round table and specialists A01–A10',
-    position: [-8.0, 4.5, 5.5],
-    target: [-8.0, 0.6, 1.0]
+    position: [-8.0, 3.8, 5.0],
+    target: [-8.0, 0.8, 1.0]
   },
   'bench-B': {
     id: 'bench-B',
     label: 'Bench B (Obligations)',
     description: 'Close inspection of Bench B round table and specialists B01–B10',
-    position: [-5.0, 4.5, 0.5],
-    target: [-5.0, 0.6, -4.0]
+    position: [-5.0, 3.8, 0.0],
+    target: [-5.0, 0.8, -4.0]
   },
   'bench-C': {
     id: 'bench-C',
     label: 'Bench C (Indian Sources)',
     description: 'Close inspection of Bench C round table and specialists C01–C10',
-    position: [0, 4.5, -1.5],
-    target: [0, 0.6, -6.0]
+    position: [0, 3.8, -2.0],
+    target: [0, 0.8, -6.0]
   },
   'bench-D': {
     id: 'bench-D',
     label: 'Bench D (Adversarial)',
     description: 'Close inspection of Bench D round table and specialists D01–D10',
-    position: [5.0, 4.5, 0.5],
-    target: [5.0, 0.6, -4.0]
+    position: [5.0, 3.8, 0.0],
+    target: [5.0, 0.8, -4.0]
   },
   'bench-E': {
     id: 'bench-E',
     label: 'Bench E (Verification)',
     description: 'Close inspection of Bench E round table and specialists E01–E10',
-    position: [8.0, 4.5, 5.5],
-    target: [8.0, 0.6, 1.0]
+    position: [8.0, 3.8, 5.0],
+    target: [8.0, 0.8, 1.0]
   },
   document: {
     id: 'document',
-    label: 'Evidence Well',
-    description: 'Overhead focus on the central evidence well and immutable case snapshot folio',
-    position: [0, 5.5, 3.8],
-    target: [0, 0.3, 0]
+    label: 'Evidence Folio',
+    description: 'Focus on the central evidence registry and case snapshot folios',
+    position: [0, 3.8, 3.0],
+    target: [0, 0.8, 0]
   },
   presiding: {
     id: 'presiding',
     label: 'Presiding Reviewer',
-    description: 'Elevated view of the Presiding Reviewer podium and synthesis lectern',
-    position: [0, 3.2, 9.8],
-    target: [0, 1.2, 6.0]
+    description: 'Elevated view of the Presiding Reviewer podium and synthesis bench',
+    position: [0, 3.0, 9.5],
+    target: [0, 1.4, 6.0]
   }
 };
 

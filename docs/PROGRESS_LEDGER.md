@@ -529,3 +529,226 @@ This ledger tracks the status, primary deliverables, and verification gates acro
   - All 10 acceptance tests executed and passed cleanly (`Exit Code: 0`).
   - Monorepo typecheck passed with 0 errors across all 7 workspaces (`npm run typecheck`).
   - Monorepo build passed across all 7 workspaces (`npm run build`).
+
+
+---
+
+## [2026-11-13] — Phase 18: Bind Real Work to Animation & Presentation View
+
+- **Goal**: Bind persisted specialist assignments and results to visible 3D agent animation states. Ensure reading begins only after relevant tasks are active, Messenger locomotion corresponds to recorded delivery events, and the Presiding Reviewer reacts to real synthesis state. Keep harmless ambient breathing separate from work indicators without simulated progress. Display origin labels (Laptop upload vs Kiosk capture), same case/document-set ID, and concise milestones. Build a server-authorized Presentation View for competition evaluators that excludes keys, internal prompts, and diagnostics at the API level. Implement robust event handling for replay, reconnect, duplicate/late events, canceled runs, and refresh state synchronization.
+- **Key Deliverables**:
+  - **Shared Contracts & Presentation Types** (`packages/shared-contracts/src/presentation.ts`, `animation-state.ts`, `events.ts`):
+    - Added 11 specialist execution events: `specialist:task_assigned`, `specialist:task_started`, `specialist:reading_evidence`, `specialist:checking_source`, `specialist:writing_finding`, `specialist:discussing`, `specialist:task_completed`, `specialist:task_failed`, `bench:packet_sealed`, `messenger:in_transit`, `case:run_canceled`.
+    - Defined `PresentationMilestone`, `SpecialistVisibleState`, and `PresentationCaseView` explicitly omitting keys, prompts, and debug diagnostics.
+    - Exported `CharacterActivity`, `BackendTaskPhase`, and `ActivityStateMap`.
+  - **Server-Side Sanitized Presentation Service & Routes** (`apps/main-api/src/services/presentation-service.ts`, `routes/presentation.ts`):
+    - Implemented `PresentationService.sanitizePayload` which strips all `RESTRICTED_FIELDS` (`deviceKey`, `apiKey`, `providerCredential`, `sessionToken`, `internalPrompt`, `systemPrompt`, `rawLlmResponse`, `debugDiagnostics`, `developerLog`, `stackTrace`, `envVariable`, `secretConfig`) server-side.
+    - Routes `/api/v1/cases/:id/presentation`, `/api/v1/cases/:id/presentation/milestones`, `/api/v1/cases/:id/specialist-states` protected by `requireCaseAccess` to enforce case isolation.
+    - Generated truthful milestones from real monotonic ledger events with real ISO timestamps.
+  - **Frontend Activity State Engine** (`apps/laptop-web/src/components/character/activity-state-engine.ts`):
+    - Deterministic mapping functions `mapTaskStateToActivity`, `mapMessengerState`, `mapPresidingState`, `buildChamberState`.
+    - Strict rule: Idle breathing is the ONLY default for unassigned, waiting, completed, failed, or cancelled states. Work animations require confirmed backend task execution.
+    - Messenger locomotion strictly restricted to `in_transit`. Presiding seated reading active only during confirmed synthesis.
+  - **SSE Client & Real-Time Synchronizer Hook** (`apps/laptop-web/src/hooks/useCaseEvents.ts`):
+    - Connects to `/api/v1/cases/:id/events` with EventSource and `Last-Event-ID` cursor replay.
+    - On mount or reconnect: fetches current state via REST GET and applies immediately, eliminating replay of old walking animations.
+    - Event deduplication by `eventId` in `seenEventIds` set.
+    - Cancellation handler resets all specialists and messenger to idle breathing.
+  - **3D Tribunal Chamber & Overlay Integration** (`TribunalChamber.tsx`, `ChamberOverlayControls.tsx`):
+    - Chamber maps per-specialist activity from backend state map to individual characters.
+    - Overlay displays real milestones timeline, origin badge (📱 Kiosk capture vs 💻 Laptop upload), and live SSE connection status.
+    - Fallback to manual activity selector in fixture/demo mode.
+  - **Competition Presentation View Component** (`apps/laptop-web/src/components/PresentationView.tsx`):
+    - Dedicated evaluator interface displaying document intake origin, bench activity breakdown, evidence-backed preliminary findings, and truthful failure alerts.
+    - Zero exposure of internal prompts or secrets.
+  - **Phone-Web Progress Parity** (`apps/phone-web/src/hooks/useCaseProgress.ts`, `ProcessingStatusScreen.tsx`):
+    - Lightweight REST polling hook mirroring same milestones, document set ID, and origin label.
+    - Preserves zero Three.js / R3F dependencies in phone bundle.
+  - **Automated 12-Point Verification Suite** (`apps/worker/src/tests/phase18-verification.ts`):
+    - 12 comprehensive structural and functional tests covering activity engine, idle breathing defaults, messenger locomotion bounds, server-side field stripping, case isolation, SSE deduplication, refresh state sync, origin propagation, and phone parity.
+
+- **Verification Gate**:
+  - All 12 automated verification tests passed (`Exit Code: 0`).
+  - Monorepo typecheck passed cleanly across all 7 workspaces.
+  - Monorepo build passed across all 7 workspaces.
+
+---
+
+## [2026-11-13] — Phase 19: Multilingual Speech and Document Conversation
+
+- **Goal**: Implement Sarvam speech recognition (STT), backend Gemini document-grounded answers, and Sarvam speech output (TTS). Support phone microphone/speaker default experience and board hardware microphone route on UNO Q. Keep one active audio source and one speaking assistant. Implement push-to-talk, live captions, start/stop, mobile audio unlock, immediate interruption, bounded streaming, valid sample formats, permission denial handling, background/resume cleanup, and language detection/correction. Keep all provider credentials centralized.
+- **Key Deliverables**:
+  - **Shared Contracts & Audio Types** (`packages/shared-contracts/src/speech.ts`):
+    - Defined `AudioSource` (`'phone_microphone' | 'board_microphone'`).
+    - Defined `SpeechRecognitionRequest`/`Response` supporting Saaras/Saarika STT, language detection across 11 Indian languages, and code-switching flags.
+    - Defined `SpeechSynthesisRequest`/`Response` supporting Bulbul TTS with per-language speakers.
+    - Defined `SpeechConversationTurnRequest`/`Response` unifying voice turn state.
+    - Defined `GeminiLiveSessionToken` for optional separate session mode.
+    - Defined `BoardAudioStatus` for UNO Q hardware route.
+  - **Centralized Speech Services & Grounded Q&A** (`apps/main-api/src/services/`):
+    - `sarvam-speech-service.ts`: Centralized `SARVAM_API_KEY` handling, Saaras STT with silence detection, and Bulbul TTS with 44.1kHz WAV PCM synthesis.
+    - `gemini-grounding-service.ts`: Document-grounded Q&A producing full detailed answers for on-screen display with exact citations and concise 1–2 sentence `spokenSummary` for speech output (Specification S5).
+    - `audio-turn-manager.ts`: Enforces single active audio source and single speaking assistant. Immediate interruption (`interrupt`) cancels in-progress audio playback. Handles silence and network resilience.
+    - `gemini-live-token-service.ts`: Issues short-lived ephemeral tokens (15-min TTL) for direct Gemini Live session mode, enforcing that it is a separate mode, not a second simultaneous pipeline.
+  - **Speech API Routes** (`apps/main-api/src/routes/speech.ts`):
+    - Endpoints: `POST /api/v1/cases/:id/speech/turn`, `/speech/transcribe`, `/speech/synthesize`, `/speech/interrupt`, `/speech/source`, `/speech/live-token`, `/speech/languages`. Protected by `requireCaseAccess`.
+  - **UNO Q Gateway Hardware Audio Route** (`apps/uno-gateway/src/routes/audio.ts`):
+    - Endpoints: `GET /api/v1/hardware/audio/status` and `POST /api/v1/hardware/audio/record` providing bounded board-mounted microphone capture.
+  - **Phone-Web Voice Experience** (`apps/phone-web/src/screens/AskDocumentScreen.tsx`):
+    - Push-to-talk button with clear states (idle, listening, transcribing, thinking, speaking).
+    - Mobile audio unlock (`AudioContext.resume()`).
+    - Immediate "Stop Speaking" interruption control.
+    - Live captions displaying real-time speech and answers.
+    - Detected language indicator with one-click visitor correction dropdown.
+    - Audio source switcher (📱 Phone vs 📻 Board).
+    - Fully usable typed questions input with audio off/disabled.
+    - Zero Three.js dependencies maintained (bundle: 196 kB).
+  - **Automated 12-Point Verification Suite** (`apps/worker/src/tests/phase19-verification.ts`):
+    - 12 comprehensive unit and structural tests verifying STT, TTS, centralized keys, audio routing, single speaker enforcement, prompt interruption, silence detection, language correction, citations, typed fallback, and Gemini Live token issuance.
+
+- **Verification Gate**:
+  - All 12 automated verification tests passed (`Exit Code: 0`).
+  - Monorepo typecheck passed cleanly across all 7 workspaces.
+  - Monorepo build passed across all 7 workspaces.
+
+---
+
+## [2026-11-13] — Phase 20: Integrate Telegram Intake and Delivery
+
+- **Goal**: Build a Telegram adapter and bot interaction flow through the shared intake/delivery contract. Link private chat using a short-lived verified flow, authorize every case request, and keep bot tokens centralized on the backend. Provide report-ready notifications and explicit report/PDF delivery. Collect consent and bind incoming document files to the correct case before invoking the OCR pipeline. Enforce 20MB file size limits and implement clear bot actions (`/start`, `/link`, `/status`, `/language`, `/report`, `/help`, `/stop`), including voice note intake. Deduplicate updates and delivery jobs; redact token-bearing URLs.
+- **Key Deliverables**:
+  - **Shared Contracts** (`packages/shared-contracts/src/telegram.ts`):
+    - Defined `TelegramChatBinding` tracking `chatId`, `caseId`, `sessionId`, `verificationCode`, `expiresAt`, `status`, and `consentGiven`.
+    - Defined `TelegramUpdate`, `TelegramMessage`, and `TelegramDeliveryJob` with idempotency keys.
+    - Defined `TelegramBotCommand`.
+  - **Telegram Service & Token Redaction** (`apps/main-api/src/services/telegram-service.ts`):
+    - Centralized `TELEGRAM_BOT_TOKEN`, URL redaction replacing tokens with `bot[REDACTED]`.
+    - Short-lived 6-digit verification code generator (10-minute TTL) with explicit consent confirmation on linking.
+    - Update deduplication: `processedUpdateIds` set ensuring duplicate updates have exactly one logical effect.
+    - Delivery job deduplication: idempotent keys (`delivery-${caseId}-${chatId}-v${version}-${reportType}`) preventing duplicate message/PDF dispatch on retries.
+    - Cross-case access prevention: strict check verifying that incoming chat requests cannot access another visitor's case.
+    - Document intake: binds incoming PDF/image documents to authorized case snapshot with `telegram_bot` source channel, checking 20MB max file size limit.
+    - Voice note input: transcribes voice note with Sarvam STT, answers via grounded Gemini, returns text and spoken audio.
+    - Bot failure resilience: catches blocked bot (403 Forbidden) and revoked tokens gracefully without crashing or deleting the report.
+  - **Telegram Routes** (`apps/main-api/src/routes/telegram.ts`):
+    - Endpoints: `POST /api/v1/cases/:id/telegram/link`, `GET /cases/:id/telegram/binding`, `POST /telegram/webhook` (with secret validation), `POST /cases/:id/telegram/deliver`.
+  - **Phone-Web Delivery Screen** (`apps/phone-web/src/screens/ResultDeliveryScreen.tsx`):
+    - "Link Telegram for Instant PDF & Voice" action displaying real 6-digit verification code (`/link <code>`), one-click copy button, and delivery status.
+  - **Automated 12-Point Verification Suite** (`apps/worker/src/tests/phase20-verification.ts`):
+    - 12 comprehensive unit and structural tests verifying adapter, command routing, token redaction, verified chat linking, consent, cross-case access denial, update deduplication, delivery idempotency, document intake, 20MB file limit enforcement, voice note processing, and blocked bot survival.
+
+- **Verification Gate**:
+  - All 12 automated verification tests passed (`Exit Code: 0`).
+  - Monorepo typecheck passed cleanly across all 7 workspaces.
+  - Monorepo build passed across all 7 workspaces.
+
+
+---
+
+## [2026-11-13] — Phase 21: Google Drive Import and Export
+
+- **Goal**: Implement Google Drive OAuth 2.0 flow with PKCE and CSRF state parameter, least-privilege `drive.file` scope, centralized token encryption (AES-256-GCM), document intake from Drive into the active case snapshot, and idempotent private export of generated PDF reports with direct view links.
+- **Key Deliverables**:
+  - **Shared Contracts** (`packages/shared-contracts/src/drive.ts`):
+    - `DriveAuthState`: Tracks connection status, email, scopes, expiration.
+    - `DriveFileItem`: Metadata for browsable Drive documents (id, name, mimeType, size, modifiedTime).
+    - `DriveExportJob`: Tracks export state (`queued`, `uploading`, `completed`, `failed`), `driveFileId`, `driveViewLink`.
+    - `DriveImportRequest`: Document import parameters.
+  - **Central Drive Service** (`apps/main-api/src/services/drive-service.ts`):
+    - OAuth2 client generator with PKCE and state token verification.
+    - Least-privilege scope: `https://www.googleapis.com/auth/drive.file`.
+    - AES-256-GCM encrypted token persistence.
+    - Document intake: downloads file stream and attaches to case snapshot with `google_drive` source channel.
+    - Report export: generates remote multipart upload of synthesized tribunal PDF report with idempotent job tracking.
+    - Disconnect: revokes OAuth access token and wipes encrypted refresh token.
+  - **Drive Routes** (`apps/main-api/src/routes/drive.ts`):
+    - Endpoints: `GET /api/v1/drive/auth-url`, `POST /drive/callback`, `GET /drive/status`, `POST /drive/disconnect`, `GET /drive/files`, `POST /cases/:id/drive/import`, `POST /cases/:id/drive/export`. Protected by `requireCaseAccess`.
+  - **Automated 10-Point Verification Suite** (`apps/worker/src/tests/phase21-verification.ts`):
+    - 10 comprehensive tests verifying OAuth generation, scope restriction, token encryption, document intake, file validation, private report export, export idempotency, disconnect revocation, and route authorization.
+
+- **Verification Gate**:
+  - All 10 automated verification tests passed (`Exit Code: 0`).
+  - Monorepo typecheck passed cleanly across all 7 workspaces.
+  - Monorepo build passed across all 7 workspaces.
+
+---
+
+## [2026-11-13] — Phase 22: Gmail App-Password Sending
+
+- **Goal**: Implement Nodemailer SMTP transport targeting `smtp.gmail.com:587` with STARTTLS, centralized `GMAIL_USER` / `GMAIL_APP_PASSWORD` credential handling without leaking secrets to callers, explicit visitor consent enforcement, outbox deduplication via idempotency keys, and granular delivery state tracking (`queued`, `submitting`, `smtp_accepted`, `failed`, `uncertain`).
+- **Key Deliverables**:
+  - **Shared Contracts** (`packages/shared-contracts/src/email.ts`):
+    - `EmailConfigState`: Redacted configuration state (`isConfigured`, `senderAddress`, `consentRequired`).
+    - `EmailSendRequest`: Destination address, report format, and explicit `consentGiven` flag.
+    - `EmailDeliveryJob`: Full delivery job lifecycle with `idempotencyKey`.
+    - `EmailDeliveryStatus`: Granular delivery statuses.
+  - **Central Gmail Service** (`apps/main-api/src/services/gmail-service.ts`):
+    - Nodemailer SMTP transport targeting `smtp.gmail.com:587` with TLS requireTLS.
+    - Consent gate: rejects any transmission where `consentGiven !== true` with HTTP 400.
+    - Outbox deduplication: prevents duplicate email dispatches using composite key `email-${caseId}-${recipient}-${reportType}`.
+    - Zero credential leakage: config status returns sanitized sender without exposing the App Password.
+    - Strict recipient validation: rejects invalid addresses and avoids implicit administrative BCCs.
+  - **Email Routes** (`apps/main-api/src/routes/email.ts`):
+    - Endpoints: `GET /api/v1/email/status`, `POST /cases/:id/email/send`, `POST /email/test-connection`. Protected by `requireCaseAccess`.
+  - **Automated 10-Point Verification Suite** (`apps/worker/src/tests/phase22-verification.ts`):
+    - 10 comprehensive tests verifying SMTP configuration, credential redaction, consent enforcement, recipient validation, outbox deduplication, STARTTLS encryption, delivery tracking, zero administrative fallbacks, and route protection.
+
+- **Verification Gate**:
+  - All 10 automated verification tests passed (`Exit Code: 0`).
+  - Monorepo typecheck passed cleanly across all 7 workspaces.
+  - Monorepo build passed across all 7 workspaces.
+
+---
+
+## [2026-11-13] — Phase 23: Deployment, Commissioning & Laptop 3D Performance Tuning
+
+- **Goal**: Formalize deployment specifications, produce a comprehensive Hardware Commissioning Worksheet, define environment configurations for central server and UNO Q gateway, establish process isolation preventing model inference on edge hardware, verify phone web bundle contains 0 Three.js/WebGL footprint, and ensure laptop WebGL canvas handles context loss and reduced-motion preferences gracefully.
+- **Key Deliverables**:
+  - **Hardware Commissioning Worksheet** (`docs/HARDWARE_COMMISSIONING_WORKSHEET.md`):
+    - Physical hardware inventory (Central Laptop, UNO Q micro-board, Logitech C920 UVC camera, PN532 RFID reader, Android/iOS test phones).
+    - Sequential startup order (1. Main API, 2. Worker Daemon, 3. UNO Q Gateway, 4. Laptop Web, 5. Phone Kiosk).
+    - Systemd daemon configuration for UNO Q (`deploy/uno-q/dharmaraksha-gateway.service`) with 256MB memory cap.
+    - Commissioning checklist and troubleshooting runbook.
+  - **Environment Specification** (`.env.example`):
+    - Central server ports, PostgreSQL connection, storage encryption key, provider keys (`GEMINI_API_KEY`, `SARVAM_API_KEY`, `TELEGRAM_BOT_TOKEN`, `GMAIL_APP_PASSWORD`).
+    - UNO Q Gateway ports, camera device index, RFID serial port, upstream central URL.
+  - **Launch Automation**:
+    - `run_dharmaraksha.bat`: Windows one-click script building shared packages, launching 5 processes in dedicated terminals, opening browser windows, and cleaning up on keypress.
+    - `start_all.ps1`: PowerShell equivalent script.
+  - **Automated 10-Point Verification Suite** (`apps/worker/src/tests/phase23-verification.ts`):
+    - 10 comprehensive tests verifying hardware worksheet, environment spec, central settings, UNO Q settings, startup order, process isolation, phone bundle 0 Three.js footprint, WebGL context loss recovery, reduced-motion camera controls, and storage encryption keys.
+
+- **Verification Gate**:
+  - All 10 automated verification tests passed (`Exit Code: 0`).
+  - Monorepo typecheck passed cleanly across all 7 workspaces.
+  - Monorepo build passed across all 7 workspaces.
+
+---
+
+## [2026-11-13] — Phase 24: Complete Regression Suite & Demo Preparation
+
+- **Goal**: Author and execute the complete end-to-end acceptance regression test suite covering all 24 phases of DHARMARAKSHA, verify dual intake parity, RFID session lifecycle, 50 specialist identities, bounded routing DAG, deterministic Messenger packet delivery, Presiding Reviewer grounded synthesis, multilingual document Q&A, Sarvam speech pipeline, tri-destination delivery (Telegram, Google Drive, Gmail), and Evaluator Presentation View data filtering. Author the formal Operator Runbook for kiosk operators and competition evaluators.
+- **Key Deliverables**:
+  - **Comprehensive Acceptance Regression Suite** (`apps/worker/src/tests/phase24-regression.ts`):
+    - T01: Multi-document intake preserves document boundaries and page order.
+    - T02: Dual intake parity: laptop direct upload and kiosk capture use identical validation pipeline.
+    - T03: Issued RFID card session lifecycle and strict cross-visitor isolation.
+    - T04: Exactly 50 unique specialist identities across 5 round-table benches with distinct chair in seat 10.
+    - T05: Bounded routing DAG: Bench A -> Bench B/C -> Bench D -> Bench E.
+    - T06: Bench packet consolidation and deterministic Messenger delivery.
+    - T07: Presiding Reviewer evidence-grounded synthesis with zero hallucinated consensus.
+    - T08: Multilingual document Q&A with exact citations across documents.
+    - T09: Sarvam speech recognition & synthesis with mobile audio unlock and prompt interruption.
+    - T10: Tri-destination delivery: Telegram bot, Google Drive OAuth, and Gmail SMTP.
+    - T11: Evaluator Presentation View strictly excludes provider keys, internal prompts, and diagnostics.
+    - T12: Laptop 3D chamber renders with 2D fallback; Phone maintains 0 Three.js payload.
+  - **Operator Runbook** (`docs/OPERATOR_RUNBOOK.md`):
+    - 7-step Standard Operating Procedure for Kiosk Operators (Turn On, Issue RFID, Scan Document, Monitor Chamber, Voice Q&A, Deliver Report, Return Card).
+    - Evaluator Demonstration Script highlighting the 5 round tables, Messenger delivery, and Presentation View.
+    - Quick Recovery Checklist for common hardware or network issues.
+
+- **Verification Gate**:
+  - All 12 acceptance regression tests passed (`Exit Code: 0`).
+  - Monorepo typecheck passed cleanly across all 7 workspaces.
+  - Monorepo build passed across all 7 workspaces.
+  - DHARMARAKSHA Project 100% complete and ready for live demonstration.

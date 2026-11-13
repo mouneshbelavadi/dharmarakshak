@@ -2,7 +2,7 @@ import React from 'react';
 import { CameraPreset, CAMERA_PRESETS } from './chamber-types.js';
 import { BENCHES, BenchId, ALL_SPECIALISTS, getSpecialistById, SpecialistDefinition } from '@dharmaraksha/tribunal-definitions';
 import { CharacterActivity } from './character/types.js';
-import { Camera, RotateCcw, Compass, Activity, Eye, Shield, Crown, FileText, CheckCircle2, User, Play } from 'lucide-react';
+import { Camera, RotateCcw, Compass, Activity, Eye, Shield, Crown, FileText, CheckCircle2, User, Play, Radio, Clock } from 'lucide-react';
 
 interface ChamberOverlayControlsProps {
   currentPreset: CameraPreset;
@@ -19,6 +19,9 @@ interface ChamberOverlayControlsProps {
   currentActivity?: CharacterActivity;
   onSelectActivity?: (activity: CharacterActivity) => void;
   onOpenValidator?: () => void;
+  milestones?: Array<{ name: string; timestamp: string; status: string }>;
+  origin?: string;
+  isConnected?: boolean;
 }
 
 export const ChamberOverlayControls: React.FC<ChamberOverlayControlsProps> = ({
@@ -35,7 +38,10 @@ export const ChamberOverlayControls: React.FC<ChamberOverlayControlsProps> = ({
   theme,
   currentActivity = 'idle_breathing',
   onSelectActivity,
-  onOpenValidator
+  onOpenValidator,
+  milestones,
+  origin,
+  isConnected
 }) => {
   const isLight = theme === 'light';
   const panelBg = isLight ? 'rgba(255, 255, 255, 0.92)' : 'rgba(15, 23, 42, 0.90)';
@@ -59,9 +65,12 @@ export const ChamberOverlayControls: React.FC<ChamberOverlayControlsProps> = ({
     { id: 'packet_handoff', label: 'Packet Handoff' }
   ];
 
+  const hasLiveEvents = milestones && milestones.length > 0;
+  const recentMilestones = milestones ? milestones.slice(-3).reverse() : [];
+
   return (
     <>
-      {/* Top Bar: Camera Presets, Character Activities & Mode Toggles */}
+      {/* Top Bar: Camera Presets, Origin, Character Activities & Mode Toggles */}
       <div style={{
         position: 'absolute',
         top: '12px',
@@ -194,13 +203,58 @@ export const ChamberOverlayControls: React.FC<ChamberOverlayControlsProps> = ({
           </button>
         </div>
 
-        {/* View Mode, Activity & Accessibility Controls */}
+        {/* View Mode, Activity, Origin & Accessibility Controls */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           gap: '6px',
           pointerEvents: 'auto'
         }}>
+          {/* Origin Badge */}
+          {origin && (
+            <div style={{
+              background: panelBg,
+              backdropFilter: 'blur(10px)',
+              border: `1px solid ${borderColor}`,
+              borderRadius: '8px',
+              padding: '4px 8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              fontSize: '11px',
+              fontWeight: 700,
+              color: origin === 'kiosk_capture' ? '#16a34a' : '#0284c7'
+            }}>
+              <span>{origin === 'kiosk_capture' ? '📱 Kiosk capture' : '💻 Laptop upload'}</span>
+            </div>
+          )}
+
+          {/* SSE Live Connection Status Indicator */}
+          {isConnected !== undefined && (
+            <div style={{
+              background: panelBg,
+              backdropFilter: 'blur(10px)',
+              border: `1px solid ${borderColor}`,
+              borderRadius: '8px',
+              padding: '4px 8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              fontSize: '11px',
+              fontWeight: 600,
+              color: isConnected ? '#10b981' : '#94a3b8'
+            }}>
+              <span style={{
+                width: 7,
+                height: 7,
+                borderRadius: '50%',
+                background: isConnected ? '#10b981' : '#94a3b8',
+                display: 'inline-block'
+              }} />
+              <span>{isConnected ? 'Live' : 'Offline'}</span>
+            </div>
+          )}
+
           {/* Animated Activity Clip Selector */}
           {onSelectActivity && (
             <div style={{
@@ -215,7 +269,7 @@ export const ChamberOverlayControls: React.FC<ChamberOverlayControlsProps> = ({
             }}>
               <label htmlFor="html-activity-select" style={{ fontSize: '11px', fontWeight: 600, color: textMuted, display: 'flex', alignItems: 'center', gap: '3px' }}>
                 <Play style={{ width: 10, height: 10, color: '#38bdf8' }} />
-                <span>Activity:</span>
+                <span>{hasLiveEvents ? 'Activity (Debug):' : 'Activity:'}</span>
               </label>
               <select
                 id="html-activity-select"
@@ -364,12 +418,12 @@ export const ChamberOverlayControls: React.FC<ChamberOverlayControlsProps> = ({
         </div>
       </div>
 
-      {/* Bottom Floating Info Pill: Contextual Evidence & Specialist Banner */}
+      {/* Bottom Floating Info Pill: Contextual Evidence, Real Milestones & Specialist Banner */}
       <div style={{
         position: 'absolute',
         bottom: '12px',
         left: '12px',
-        maxWidth: '520px',
+        maxWidth: '560px',
         background: panelBg,
         backdropFilter: 'blur(10px)',
         border: `1px solid ${borderColor}`,
@@ -424,7 +478,26 @@ export const ChamberOverlayControls: React.FC<ChamberOverlayControlsProps> = ({
             <div style={{ fontSize: '11px', lineHeight: 1.35 }}>
               {currentBench.workingPrinciple}
             </div>
-            <div style={{ fontSize: '10px', color: '#38bdf8', marginTop: '4px' }}>
+
+            {/* If real milestones exist, display recent real milestones */}
+            {recentMilestones.length > 0 && (
+              <div style={{ marginTop: '8px', borderTop: `1px solid ${borderColor}`, paddingTop: '6px' }}>
+                <div style={{ fontSize: '10px', fontWeight: 700, color: '#38bdf8', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Clock style={{ width: 10, height: 10 }} />
+                  <span>Real Persisted Milestones:</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  {recentMilestones.map((rm, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: textPrimary }}>
+                      <span>✓ {rm.name}</span>
+                      <span style={{ color: textMuted }}>{rm.timestamp ? new Date(rm.timestamp).toLocaleTimeString() : ''}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={{ fontSize: '10px', color: '#38bdf8', marginTop: '6px' }}>
               Click any of the 10 animated specialist characters around the table to inspect individual contract and findings
             </div>
           </div>

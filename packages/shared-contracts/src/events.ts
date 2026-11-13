@@ -26,7 +26,18 @@ export type CaseScopedEventType =
   | 'kiosk:page_buffered'
   | 'kiosk:card_tapped'
   | 'kiosk:session_reset'
-  | 'delivery:dispatched';
+  | 'delivery:dispatched'
+  | 'specialist:task_assigned'
+  | 'specialist:task_started'
+  | 'specialist:reading_evidence'
+  | 'specialist:checking_source'
+  | 'specialist:writing_finding'
+  | 'specialist:discussing'
+  | 'specialist:task_completed'
+  | 'specialist:task_failed'
+  | 'bench:packet_sealed'
+  | 'messenger:in_transit'
+  | 'case:run_canceled';
 
 export interface CaseScopedEvent<T = unknown> {
   cursor: number; // Monotonically increasing 64-bit integer cursor

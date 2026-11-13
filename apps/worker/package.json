@@ -13,6 +13,13 @@
     "test:phase15": "node dist/tests/phase15-verification.js",
     "test:phase16": "node dist/tests/phase16-verification.js",
     "test:phase17": "node dist/tests/phase17-verification.js",
+    "test:phase18": "node dist/tests/phase18-verification.js",
+    "test:phase19": "node dist/tests/phase19-verification.js",
+    "test:phase20": "node dist/tests/phase20-verification.js",
+    "test:phase21": "node dist/tests/phase21-verification.js",
+    "test:phase22": "node dist/tests/phase22-verification.js",
+    "test:phase23": "node dist/tests/phase23-verification.js",
+    "test:phase24": "node dist/tests/phase24-regression.js",
     "dev": "tsc -w",
     "clean": "rimraf dist"
   },

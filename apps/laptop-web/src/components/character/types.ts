@@ -58,3 +58,4 @@ export const BONE_NAMES = [
 ] as const;
 
 export type BoneName = typeof BONE_NAMES[number];
+

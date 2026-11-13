@@ -18,6 +18,7 @@ import fs from 'fs';
 import { healthRouter } from './routes/health.js';
 import { rfidRouter } from './routes/rfid.js';
 import { captureRouter } from './routes/capture.js';
+import { audioRouter } from './routes/audio.js';
 import { pairingRouter } from './routes/pairing.js';
 import { csrfOriginCheck, requirePairedPhone } from './middleware/security-middleware.js';
 import { tunnelSupervisor } from './services/tunnel-service.js';
@@ -87,6 +88,7 @@ export function createGateway() {
   // Routes self-declare their own sub-paths (/rfid/..., /capture/...) under /api/v1
   app.use('/api/v1', requirePairedPhone, rfidRouter);
   app.use('/api/v1', requirePairedPhone, captureRouter);
+  app.use('/api/v1', requirePairedPhone, audioRouter);
 
   // ─── Serve static phone UI assets ──────────────────────────────────────────
   const phoneWebDist = path.resolve(process.env.PHONE_WEB_DIST || '../phone-web/dist');

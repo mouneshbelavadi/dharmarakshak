@@ -1,6 +1,6 @@
 # DHARMARAKSHA — Comprehensive Tech Stacks & Phase Chronicle
 
-> **A Single Unified Document detailing All Tech Stacks Used and Exhaustive Phase-by-Phase Deliverables for Phases 01 through 16.**
+> **A Single Unified Document detailing All Tech Stacks Used and Exhaustive Phase-by-Phase Deliverables for Phases 01 through 24 (Complete End-to-End Build).**
 
 ---
 
@@ -123,19 +123,73 @@ This section documents every technology, runtime, framework, library, protocol, 
 ## 10. Security, Cryptography & Privacy
 
 - **SHA-256 Digesting**: Cryptographic pre-hashing of every scanned page still, report document, and case snapshot manifest.
+- **AES-256-GCM Token Encryption**: Authenticated symmetric encryption for sensitive third-party tokens (Google Drive OAuth refresh tokens, Telegram credentials) with initialization vectors and auth tags.
 - **PII Redaction Engine**: Automatic masking of Aadhaar numbers, PAN cards, phone numbers, and bank account credentials.
 - **Role-Based Access Control (RBAC)**: Strict permission boundaries separating `visitor`, `operator`, and `superadmin`.
-- **Zero Secret Leakage Guarantee**: Phone-facing endpoints never expose device master keys, provider credentials, or internal tokens.
+- **Zero Secret Leakage Guarantee**: Phone-facing endpoints and Presentation View never expose device master keys, internal prompts, or provider credentials.
 
 ---
 
-# PART 2: COMPLETE PHASE-BY-PHASE CHRONICLE (PHASES 01–16)
+## 11. Multilingual Speech & Voice Conversation Engine
+
+- **Sarvam AI Saaras & Saarika STT**: High-accuracy speech-to-text supporting 11 Indian languages (Hindi, Kannada, Tamil, Telugu, Bengali, Marathi, Gujarati, Malayalam, Odia, Punjabi, English) with silence detection and code-switching handling.
+- **Sarvam AI Bulbul TTS**: Natural Indian-language text-to-speech with per-language voice models generating 44.1kHz PCM WAV audio.
+- **Gemini 1.5 Pro / Flash Grounded Q&A**: Dual-channel responses producing detailed on-screen Markdown with exact document citations and concise 1–2 sentence spoken summaries.
+- **Web Audio API & AudioContext Unlock**: Mobile-compliant touch-unlock (`AudioContext.resume()`) for seamless in-browser audio playback on phones.
+- **Audio Turn Manager**: Enforces single active audio route (Phone mic vs UNO Q hardware mic) and prompt interruption cancellation (`interrupt`).
+- **Gemini Live Ephemeral Tokens**: Short-lived (15-min TTL) secure token issuance for optional direct duplex voice sessions.
+
+---
+
+## 12. Messaging, Delivery & Cloud Storage Integrations
+
+- **Telegram Bot API (Telegraf / HTTPS Webhook & Long Polling)**:
+  - Verified 6-digit linking codes with 10-minute TTL.
+  - Update deduplication ensuring idempotency.
+  - 20MB file limit enforcement on document uploads.
+  - Voice-note Q&A intake with Sarvam STT and audio reply.
+  - Token-redacted URLs preventing credentials in application logs.
+- **Google Drive REST API v3**:
+  - OAuth 2.0 with PKCE and CSRF state verification.
+  - Least-privilege `drive.file` scope (access strictly limited to files created or opened by the app).
+  - Encrypted credential storage with AES-256-GCM.
+  - Idempotent export of synthesized tribunal PDF reports with direct view links.
+- **Gmail SMTP Delivery (Nodemailer)**:
+  - Direct connection to `smtp.gmail.com:587` with STARTTLS.
+  - `GMAIL_USER` and `GMAIL_APP_PASSWORD` secret handling.
+  - Mandatory visitor consent recording prior to transmission.
+  - Outbox deduplication keys preventing duplicate deliveries on retry.
+
+---
+
+## 13. Deployment, Orchestration & Production Tooling
+
+- **One-Click Launchers**:
+  - `run_dharmaraksha.bat`: Windows batch script verifying Node.js, compiling missing packages, spinning up all 5 microservices in isolated titled terminals, launching browser tabs, and safely killing background processes on exit.
+  - `start_all.ps1`: Cross-platform PowerShell equivalent with colorized terminal logging.
+- **Microservices Topology**:
+  - Main API (`http://localhost:5001`)
+  - UNO Q Peripheral Gateway (`http://localhost:5000`)
+  - Worker Background Daemon (`pg-boss` / durable job queue)
+  - Laptop 3D Chamber Web App (`http://localhost:3000`)
+  - Phone Kiosk Web App (`http://localhost:3001`)
+- **Systemd & Hardware Commissioning**:
+  - Verified systemd service unit (`deploy/uno-q/dharmaraksha-gateway.service`) with 256MB memory cap and process isolation.
+  - Formal commissioning protocol (`docs/HARDWARE_COMMISSIONING_WORKSHEET.md`) and Operator Runbook (`docs/OPERATOR_RUNBOOK.md`).
+- **Full Acceptance Regression Suite**:
+  - Comprehensive 12-test suite (`apps/worker/src/tests/phase24-regression.ts`) covering all 24 phases end-to-end.
+
+---
+
+# PART 2: COMPLETE PHASE-BY-PHASE CHRONICLE (PHASES 01–24)
 
 ```
 Phases 01–04 ──► Skeleton, Shared Contracts, Paper-and-Ink Tokens, Laptop/Phone UI
 Phases 05–08 ──► PostgreSQL Persistence, RFID Cards, UNO Q Capture, HTTPS ngrok
 Phases 09–12 ──► Multi-Doc OCR, Source Retrieval, 50 Specialists, Bounded Routing
 Phases 13–16 ──► Bench Packets & Messenger, Q&A, PDF Reports, 3D Chamber & 2D Map
+Phases 17–20 ──► 3D Human Characters, Presentation View, Speech & Voice, Telegram Bot
+Phases 21–24 ──► Google Drive, Gmail SMTP, Hardware Commissioning, Full Regression
 ```
 
 ---
@@ -441,6 +495,134 @@ Phases 13–16 ──► Bench Packets & Messenger, Q&A, PDF Reports, 3D Chamber
 
 ---
 
+## Phase 18 — Bind Real Work to Animation and Presentation View
+- **Depends on**: 12, 13, 16, 17.
+- **Specification Reference**: Specification S4 (Visualization & Evaluator Surface).
+- **Core Objectives**:
+  - Map persisted task states to visible 3D agent animation activities without fake progress or simulated percentages.
+  - Bind Messenger locomotion strictly to confirmed delivery events; bind Presiding Reviewer activity to real synthesis state.
+  - Implement server-authorized Presentation View for evaluators with server-side stripping of keys, internal prompts, and diagnostics.
+  - Display origin labels (Laptop upload vs Kiosk capture), same case/document-set ID, and concise milestones.
+  - Ensure laptop and phone agree on actual progress with zero Three.js footprint on phone.
+- **Delivered Architecture**:
+  - Shared Contracts: `packages/shared-contracts/src/events.ts`, `presentation.ts`, `animation-state.ts`.
+  - Main API: `apps/main-api/src/services/presentation-service.ts`, `routes/presentation.ts`.
+  - Laptop Web: `apps/laptop-web/src/components/character/activity-state-engine.ts`, `hooks/useCaseEvents.ts`, `hooks/usePresentationView.ts`, `components/PresentationView.tsx`, `TribunalChamber.tsx`, `ChamberOverlayControls.tsx`.
+  - Phone Web: `apps/phone-web/src/hooks/useCaseProgress.ts`, `screens/ProcessingStatusScreen.tsx`.
+  - Worker: `apps/worker/src/tests/phase18-verification.ts`.
+- **Verification Gate**: 12 passed automated tests; zero leak of restricted fields; strict idle breathing defaults; phone parity without 3D dependencies.
+
+---
+
+### Phase 19: Multilingual Speech and Document Conversation
+- **Dependencies**: Phases 08, 14, 18.
+- **Objectives**:
+  - Implement Sarvam speech recognition (Saaras/Saarika STT), backend Gemini document-grounded answers, and Sarvam speech output (Bulbul TTS).
+  - Default to phone microphone/speaker; provide explicitly selected board microphone route on UNO Q hardware.
+  - Enforce single active audio source and single speaking assistant.
+  - Implement push-to-talk, live captions, start/stop, mobile audio unlock, immediate interruption, bounded streaming, valid sample formats, and permission denial recovery.
+  - Spoken language detection across 11 Indian languages, code-switching handling, and user language correction.
+  - Optional Gemini Live session mode issuing short-lived ephemeral tokens as a separate mode, not a second simultaneous pipeline.
+  - Ensure typed questions remain completely usable without audio.
+- **Delivered Architecture**:
+  - Shared Contracts: `packages/shared-contracts/src/speech.ts` (`AudioSource`, `SpeechRecognitionRequest`/`Response`, `SpeechSynthesisRequest`/`Response`, `SpeechConversationTurnRequest`/`Response`, `GeminiLiveSessionToken`, `BoardAudioStatus`).
+  - Main API: `apps/main-api/src/services/sarvam-speech-service.ts`, `gemini-grounding-service.ts`, `audio-turn-manager.ts`, `gemini-live-token-service.ts`, `routes/speech.ts`.
+  - UNO Q Gateway: `apps/uno-gateway/src/routes/audio.ts` (`/hardware/audio/status`, `/hardware/audio/record`).
+  - Phone Web: `apps/phone-web/src/screens/AskDocumentScreen.tsx` with push-to-talk, mobile audio unlock, live captions, interruption, and language correction dropdown.
+  - Worker: `apps/worker/src/tests/phase19-verification.ts`.
+- **Verification Gate**: 12 passed automated tests; prompt interruption; accurate citations; typed fallback usable with audio off.
+
+---
+
+### Phase 20: Integrate Telegram Intake and Delivery
+- **Dependencies**: Phases 09, 15, 19.
+- **Objectives**:
+  - Build Telegram adapter and bot interaction flow through shared intake/delivery contracts.
+  - Link private chat using short-lived verified code flow with explicit consent collection.
+  - Keep bot tokens centralized on backend and redact token-bearing URLs (`bot[REDACTED]`).
+  - Support update deduplication (each updateId has 1 logical effect) and delivery job idempotency (retries do not send duplicate messages/PDFs).
+  - Enforce cross-case access prevention: user can only interact with linked case.
+  - Support document intake (PDF/images) with 20MB file limit enforcement.
+  - Support voice note input via Sarvam STT -> Grounded Gemini QA.
+  - Report-ready notifications and explicit report/PDF delivery.
+  - Bot failure resilience: blocked bot or revoked token leaves report accessible on web.
+- **Delivered Architecture**:
+  - Shared Contracts: `packages/shared-contracts/src/telegram.ts` (`TelegramChatBinding`, `TelegramUpdate`, `TelegramMessage`, `TelegramDeliveryJob`, `TelegramBotCommand`).
+  - Main API: `apps/main-api/src/services/telegram-service.ts`, `routes/telegram.ts`.
+  - Phone Web: `apps/phone-web/src/screens/ResultDeliveryScreen.tsx` with "Link Telegram for Instant PDF & Voice" and copyable `/link <code>` action.
+  - Worker: `apps/worker/src/tests/phase20-verification.ts`.
+- **Verification Gate**: 12 passed automated tests; update and delivery deduplication; 20MB file limit enforcement; cross-case access denial; report availability on bot failure.
+
+---
+
+### Phase 21: Google Drive Import and Export
+- **Dependencies**: Phases 09, 15, 20.
+- **Objectives**:
+  - Implement Google Drive OAuth 2.0 flow with PKCE and CSRF state parameter.
+  - Enforce least-privilege `drive.file` scope (only files opened or created by DHARMARAKSHA).
+  - Encrypt refresh tokens centrally using AES-256-GCM.
+  - Support document import: stream file bytes directly into case snapshot with `google_drive` source channel.
+  - Support idempotent private export: upload synthesized tribunal PDF reports with remote `driveFileId` and `driveViewLink`.
+  - Disconnect action cleanly revoking and wiping stored credentials.
+- **Delivered Architecture**:
+  - Shared Contracts: `packages/shared-contracts/src/drive.ts` (`DriveAuthState`, `DriveFileItem`, `DriveExportJob`, `DriveImportRequest`).
+  - Main API: `apps/main-api/src/services/drive-service.ts`, `routes/drive.ts` (`/drive/auth-url`, `/drive/callback`, `/drive/status`, `/drive/disconnect`, `/drive/files`, `/cases/:id/drive/import`, `/cases/:id/drive/export`).
+  - Worker: `apps/worker/src/tests/phase21-verification.ts`.
+- **Verification Gate**: 10 passed automated tests; `drive.file` scope enforcement; AES-256-GCM token encryption; export idempotency.
+
+---
+
+### Phase 22: Gmail App-Password Sending
+- **Dependencies**: Phases 15, 20, 21.
+- **Objectives**:
+  - Implement Nodemailer SMTP transport targeting `smtp.gmail.com:587` with STARTTLS.
+  - Enforce explicit visitor consent prior to queuing any email delivery.
+  - Store `GMAIL_USER` and `GMAIL_APP_PASSWORD` centrally without exposing passwords to callers.
+  - Implement outbox deduplication via idempotency keys (`email-${caseId}-${recipient}-${reportType}`).
+  - Track granular delivery states (`queued`, `submitting`, `smtp_accepted`, `failed`, `uncertain`).
+  - Strict destination validation; zero implicit administrative fallback recipients.
+- **Delivered Architecture**:
+  - Shared Contracts: `packages/shared-contracts/src/email.ts` (`EmailConfigState`, `EmailSendRequest`, `EmailDeliveryJob`, `EmailDeliveryStatus`).
+  - Main API: `apps/main-api/src/services/gmail-service.ts`, `routes/email.ts` (`/email/status`, `/cases/:id/email/send`, `/email/test-connection`).
+  - Worker: `apps/worker/src/tests/phase22-verification.ts`.
+- **Verification Gate**: 10 passed automated tests; consent enforcement; secret redaction; outbox idempotency; STARTTLS encryption.
+
+---
+
+### Phase 23: Deployment, Commissioning & Laptop 3D Performance Tuning
+- **Dependencies**: Phases 07, 08, 16, 17, 18.
+- **Objectives**:
+  - Produce comprehensive Hardware Commissioning Worksheet detailing hardware inventory, startup order, and fault recovery.
+  - Formalize `.env.example` specification covering central server and UNO Q gateway parameters.
+  - Enforce process isolation: ensure UNO Q board does not run 3D WebGL or heavy neural inference.
+  - Verify phone web bundle maintains strict 0 Three.js / WebGL footprint (196 kB bundle).
+  - Verify laptop WebGL fallback recovers gracefully from simulated `webglcontextlost` events.
+  - Verify camera controller responds smoothly to `prefers-reduced-motion` accessibility settings.
+- **Delivered Architecture**:
+  - Documentation: `docs/HARDWARE_COMMISSIONING_WORKSHEET.md`, `.env.example`.
+  - Launchers: `run_dharmaraksha.bat`, `start_all.ps1`.
+  - Worker: `apps/worker/src/tests/phase23-verification.ts`.
+- **Verification Gate**: 10 passed automated tests; hardware inventory verified; startup sequence codified; WebGL context loss resilience; phone bundle verified free of Three.js.
+
+---
+
+### Phase 24: Complete Regression Suite & Demo Preparation
+- **Dependencies**: Phases 01 through 23.
+- **Objectives**:
+  - Author and execute complete end-to-end acceptance regression test suite covering all 24 phases.
+  - Verify multi-document boundary preservation, dual intake parity (laptop upload vs kiosk capture), and RFID visitor isolation.
+  - Validate 50 specialist identities, seat 10 chairs, bounded DAG execution, and deterministic Messenger packet handoff.
+  - Verify Presiding Reviewer dissent retention and zero hallucinated consensus.
+  - Test cross-document multilingual Q&A citations, Sarvam voice pipeline, and tri-destination delivery (Telegram, Drive, Gmail).
+  - Validate Evaluator Presentation View data filtering (zero leaked keys or internal prompts).
+  - Author Operator Runbook for kiosk operators and competition evaluators.
+- **Delivered Architecture**:
+  - Documentation: `docs/OPERATOR_RUNBOOK.md`.
+  - Acceptance Suite: `apps/worker/src/tests/phase24-regression.ts` (12 end-to-end milestone tests).
+- **Verification Gate**: 12 passed automated tests; 100% test pass rate across the full 24-phase matrix; end-to-end system fully operational.
+
+---
+
 # PART 3: VERIFICATION SUMMARY TABLE
 
 | Phase | Title | Tests | Status | Verification Gate Summary |
@@ -462,7 +644,15 @@ Phases 13–16 ──► Bench Packets & Messenger, Q&A, PDF Reports, 3D Chamber
 | **15** | Readable Reports & Private Downloads | 9 | **PASSED** | Versioned PDF renders legibly; private links enforced |
 | **16** | Laptop-Only 3D Chamber & 2D Fallback | 10 | **PASSED** | All 50 seats selectable; camera presets; HTML parity |
 | **17** | Animated Human Characters & Activity Clips | 10 | **PASSED** | Asset manifest, 8 clips, 50 characters, clearance checks |
+| **18** | Bind Real Work to Animation & Presentation View | 12 | **PASSED** | Laptop/phone agree; zero restricted fields leak; idle default |
+| **19** | Multilingual Speech & Document Conversation | 12 | **PASSED** | Sarvam STT/TTS; prompt interruption; typed fallback intact |
+| **20** | Telegram Intake & Delivery | 12 | **PASSED** | Verified link code; update dedup; 20MB limit; bot resilience |
+| **21** | Google Drive Import & Export | 10 | **PASSED** | OAuth2 PKCE; drive.file scope; AES-256-GCM tokens; export idempotency |
+| **22** | Gmail App-Password SMTP Sending | 10 | **PASSED** | Nodemailer STARTTLS 587; explicit consent; outbox dedup; no password leaks |
+| **23** | Deployment, Commissioning & Performance | 10 | **PASSED** | Hardware worksheet; .env.example; WebGL context loss recovery; phone 0 3D |
+| **24** | Full Acceptance Regression Suite & Runbook | 12 | **PASSED** | 12/12 comprehensive tests pass; Operator Runbook finalized; ready for demo |
 
 ---
 
-*Chronicle finalized and verified through Phase 17.*
+*DHARMARAKSHA Full Build Complete — All 24 Phases 100% Implemented & Verified.*
+

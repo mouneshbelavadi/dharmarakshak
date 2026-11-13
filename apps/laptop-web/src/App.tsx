@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { PresentationHeader, LaptopDestination } from './components/PresentationHeader.js';
 import { TribunalChamber } from './components/TribunalChamber.js';
-import { DocumentWorkspace } from './components/DocumentWorkspace.js';
+import { BenchDeliberationsView } from './components/BenchDeliberationsView.js';
+import { JudicialDecreeView } from './components/JudicialDecreeView.js';
+import { OralArgumentsView } from './components/OralArgumentsView.js';
+import { CertifiedDeliveryView } from './components/CertifiedDeliveryView.js';
 import { DocumentsView } from './components/DocumentsView.js';
-import { ReportPreview } from './components/ReportPreview.js';
-import { ConnectionsView } from './components/ConnectionsView.js';
+import { PresentationView } from './components/PresentationView.js';
 import { DeviceManagementView } from './components/DeviceManagementView.js';
-import { BenchInspector } from './components/BenchInspector.js';
 import { CaseRecord, LaptopTheme, UserRole } from '@dharmaraksha/shared-contracts';
 import { BenchId } from '@dharmaraksha/tribunal-definitions';
 import './styles/theme.css';
@@ -27,18 +28,18 @@ const sampleCase: CaseRecord = {
   documents: [],
   benchPackets: {},
   presidingSummary: {
-    executiveSummary: 'This preliminary legal review covers the 3-page Commercial Lease Agreement and 1-page Security Deposit Counterfoil. Bench A established high text fidelity, Bench B identified key rent & lock-in terms, Bench C cited the Transfer of Property Act 1882, Bench D highlighted uncapped forfeiture penalties, and Bench E audited source citations.',
+    executiveSummary: 'This authoritative legal adjudication covers the 3-page Commercial Lease Agreement and 1-page Security Deposit Counterfoil. Bench A established 99.4% text fidelity, Bench B identified mandatory rent & lock-in terms, Bench C cited the Transfer of Property Act 1882, Bench D highlighted uncapped forfeiture penalties, and Bench E audited source citations.',
     keyObligations: [
       'Clause 4: Monthly rent of INR 45,000 payable strictly in advance on or before the 5th of each English calendar month.',
       'Clause 8: Lessee is strictly responsible for minor interior repairs up to INR 5,000 per instance.',
       'Clause 11: Mandatory 11-month lock-in period during which lessee cannot terminate without penalty.'
     ],
     materialRisks: [
-      'Clause 12: Lessor reserves unilateral right to forfeit 100% of the 6-month security deposit upon early termination.',
-      'Clause 14: Delayed rent accrues compounding interest at 24% per annum (prima facie penal interest).'
+      'Clause 12: Lessor reserves unilateral right to forfeit 100% of the 6-month security deposit upon early termination (prima facie penal under Kailash Nath doctrine).',
+      'Clause 14: Delayed rent accrues compounding interest at 24% per annum (unenforceable penal interest under Section 74).'
     ],
     criticalDeadlines: [
-      'Rent Payment: 5th of every month',
+      'Rent Payment: 5th of every English calendar month',
       'Renewal Notice: Written intimation required 60 days prior to lease expiry'
     ],
     inconsistenciesIdentified: [
@@ -49,7 +50,7 @@ const sampleCase: CaseRecord = {
       'Has the physical inspection checklist (Annexure A) been signed by the lessor?'
     ],
     missingDocumentsOrExhibits: [
-      'Annexure A (Inventory of fixtures) referenced in Clause 3 is missing from the scanned folio.'
+      'Annexure A (Schedule of Fixtures) referenced in Clause 3 is missing from the scanned folio.'
     ],
     statutoryCoverageLimitations: [
       'State-specific Rent Control exemptions for commercial premises exceeding specified municipal valuation require confirmation of local municipal notification.'
@@ -63,10 +64,11 @@ const sampleCase: CaseRecord = {
 };
 
 export function App() {
-  const [destination, setDestination] = useState<LaptopDestination>('review');
+  // Default to the full-viewport 3D Grand Courtroom Chamber!
+  const [destination, setDestination] = useState<LaptopDestination>('chamber');
   const [theme, setTheme] = useState<LaptopTheme>('split');
   const [userRole, setUserRole] = useState<UserRole>('visitor');
-  const [isPresentationMode, setIsPresentationMode] = useState<boolean>(true);
+  const [isPresentationMode, setIsPresentationMode] = useState<boolean>(false);
   const [isFixture, setIsFixture] = useState<boolean>(true);
   const [selectedBenchId, setSelectedBenchId] = useState<BenchId>('A');
   const [selectedSpecialistId, setSelectedSpecialistId] = useState<string | undefined>(undefined);
@@ -80,10 +82,12 @@ export function App() {
         width: '100vw',
         height: '100vh',
         overflow: 'hidden',
-        background: theme === 'light' ? '#f9f6ef' : '#070a10',
-        color: theme === 'light' ? '#0f172a' : '#f8fafc'
+        background: theme === 'light' ? '#f9f6ef' : '#05070e',
+        color: theme === 'light' ? '#1a1612' : '#f8fafc',
+        fontFamily: 'var(--font-sans)'
       }}
     >
+      {/* Imperial Courtroom Header */}
       <PresentationHeader
         currentCase={sampleCase}
         destination={destination}
@@ -98,67 +102,72 @@ export function App() {
         onToggleFixture={() => setIsFixture(!isFixture)}
       />
 
-      <div style={{ display: 'flex', flex: 1, height: 'calc(100vh - 56px)', overflow: 'hidden' }}>
-        {/* Dynamic Center Workspaces based on Destination */}
-        <div style={{ flex: 1, height: '100%', overflow: 'hidden', display: 'flex' }}>
-          {/* Destination 1: Review (Split Workspace: Folio + 3D Chamber) */}
-          {destination === 'review' && (
-            <>
-              {/* Left Side: Warm Ivory Folio Workspace */}
+      {/* Main Courtroom Viewport Area */}
+      <main style={{ flex: 1, height: 'calc(100vh - 62px)', overflow: 'hidden', position: 'relative' }}>
+        {/* Section 1: 🏛️ The Grand Courtroom Chamber (Full-Screen Three.js Experience) */}
+        {(destination === 'chamber' || destination === 'review') && (
+          <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex' }}>
+            {/* Optional Evaluator HUD drawer when toggled on */}
+            {isPresentationMode && (
               <div style={{
-                flex: '0 0 50%',
+                width: '440px',
                 height: '100%',
-                overflow: 'hidden',
-                borderRight: theme === 'light' ? '1px solid #e7e0d3' : '1px solid #1e293b'
+                overflowY: 'auto',
+                borderRight: theme === 'light' ? '1px solid #e2d9c8' : '1px solid rgba(212, 175, 55, 0.3)',
+                background: theme === 'light' ? '#ffffff' : '#0c1222',
+                zIndex: 30,
+                boxShadow: '10px 0 30px rgba(0, 0, 0, 0.5)'
               }}>
-                <DocumentWorkspace currentCase={sampleCase} />
+                <PresentationView caseId={sampleCase.caseId} theme={theme} />
               </div>
+            )}
 
-              {/* Right Side: Ink-Dark 3D Chamber Canvas */}
-              <div style={{ flex: '0 0 50%', height: '100%', position: 'relative' }}>
-                <TribunalChamber
-                  selectedBenchId={selectedBenchId}
-                  selectedSpecialistId={selectedSpecialistId}
-                  onSelectBench={setSelectedBenchId}
-                  onSelectSpecialist={setSelectedSpecialistId}
-                  theme={theme}
-                />
-              </div>
-            </>
-          )}
-
-          {/* Destination 2: Documents (Multi-document Folio Manager) */}
-          {destination === 'documents' && (
-            <DocumentsView currentCase={sampleCase} isFixture={isFixture} />
-          )}
-
-          {/* Destination 3: Reports (Referenced PDF Preview & Export) */}
-          {destination === 'reports' && (
-            <ReportPreview currentCase={sampleCase} />
-          )}
-
-          {/* Destination 4: Connections (Telegram, Drive, Gmail, Tunnel status) */}
-          {destination === 'connections' && (
-            <ConnectionsView isFixture={isFixture} />
-          )}
-
-          {/* Destination 5: Device (Role-gated UNO Q & RFID Console) */}
-          {destination === 'device' && (
-            <DeviceManagementView userRole={userRole} isFixture={isFixture} />
-          )}
-        </div>
-
-        {/* Bench & Specialist Inspector Sidebar (Shown on Review destination) */}
-        {destination === 'review' && (
-          <BenchInspector
-            selectedBenchId={selectedBenchId}
-            selectedSpecialistId={selectedSpecialistId}
-            onSelectBench={setSelectedBenchId}
-            onSelectSpecialist={setSelectedSpecialistId}
-          />
+            {/* Full 3D Chamber Canvas */}
+            <div style={{ flex: 1, height: '100%', position: 'relative' }}>
+              <TribunalChamber
+                caseId={isFixture ? undefined : sampleCase.caseId}
+                selectedBenchId={selectedBenchId}
+                selectedSpecialistId={selectedSpecialistId}
+                onSelectBench={setSelectedBenchId}
+                onSelectSpecialist={setSelectedSpecialistId}
+                theme={theme}
+              />
+            </div>
+          </div>
         )}
-      </div>
+
+        {/* Section 2: ⚖️ Bench Deliberations & Specialist Arguments */}
+        {destination === 'deliberations' && (
+          <BenchDeliberationsView currentCase={sampleCase} theme={theme} />
+        )}
+
+        {/* Section 3: 📜 Legal Evidence Folios & Document Inspector */}
+        {(destination === 'evidence' || destination === 'documents') && (
+          <DocumentsView currentCase={sampleCase} isFixture={isFixture} />
+        )}
+
+        {/* Section 4: 🔨 Presiding Judge's Synthesis & Judicial Decree */}
+        {(destination === 'decree' || destination === 'reports') && (
+          <JudicialDecreeView currentCase={sampleCase} theme={theme} />
+        )}
+
+        {/* Section 5: 🎙️ Multilingual Oral Arguments & Courtroom Voice Chamber */}
+        {destination === 'oral_arguments' && (
+          <OralArgumentsView currentCase={sampleCase} theme={theme} />
+        )}
+
+        {/* Section 6: 📦 Certified Delivery & Export Center */}
+        {(destination === 'delivery' || destination === 'connections') && (
+          <CertifiedDeliveryView currentCase={sampleCase} theme={theme} />
+        )}
+
+        {/* Role-gated Device Management (UNO Q / Hardware console) */}
+        {destination === 'device' && (
+          <DeviceManagementView userRole={userRole} isFixture={isFixture} />
+        )}
+      </main>
     </div>
   );
 }
+
 export default App;

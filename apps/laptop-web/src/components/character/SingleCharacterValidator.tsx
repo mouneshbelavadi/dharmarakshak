@@ -332,3 +332,4 @@ export const SingleCharacterValidator: React.FC<SingleCharacterValidatorProps> =
     </div>
   );
 };
+

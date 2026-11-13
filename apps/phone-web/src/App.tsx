@@ -188,6 +188,7 @@ export function App() {
         {currentStep === 'processing' && (
           <ProcessingStatusScreen
             currentStage={5} // Demo complete stage
+            caseId={cardUid ? 'case-demo-001' : undefined}
             onProceedToQA={() => setCurrentStep('ask_qa')}
           />
         )}
