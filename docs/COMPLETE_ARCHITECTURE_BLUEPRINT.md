@@ -313,3 +313,4 @@ flowchart TD
 - **Google Drive API**: OAuth 2.0 authorized report PDF upload to visitor's Google Drive.
 - **Gmail SMTP Dispatcher**: App-Password authenticated email sender for final referenced reports.
 - **Mandatory Statutory Disclaimer**: Prominently enforced across all surfaces stating the system provides preliminary AI assistance and **NOT** formal human legal advice or an advocate-on-record opinion.
+

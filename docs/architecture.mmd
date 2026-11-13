@@ -1,0 +1,147 @@
+flowchart TD
+    %% Styling Classes
+    classDef phone fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
+    classDef gateway fill:#1e293b,stroke:#f59e0b,stroke-width:2px,color:#f8fafc;
+    classDef laptop fill:#1e293b,stroke:#10b981,stroke-width:2px,color:#f8fafc;
+    classDef benchA fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
+    classDef benchB fill:#1e293b,stroke:#34d399,stroke-width:2px,color:#f8fafc;
+    classDef benchC fill:#1e293b,stroke:#fbbf24,stroke-width:2px,color:#f8fafc;
+    classDef benchD fill:#1e293b,stroke:#f87171,stroke-width:2px,color:#f8fafc;
+    classDef benchE fill:#1e293b,stroke:#c084fc,stroke-width:2px,color:#f8fafc;
+    classDef official fill:#312e81,stroke:#818cf8,stroke-width:2px,color:#f8fafc;
+    classDef database fill:#0f172a,stroke:#60a5fa,stroke-width:2px,color:#f8fafc;
+    classDef cloud fill:#3b0764,stroke:#d8b4fe,stroke-width:2px,color:#f8fafc;
+
+    %% TIER 1: KIOSK PHONE
+    subgraph TIER_1 ["TIER 1: KIOSK PHONE (apps/phone-web)"]
+        P1["Visitor Tap & RFID Prompt (3000ms debounce)"]:::phone
+        P2["Language & Consent Selector (Kannada, Hindi, Tamil, Telugu, English)"]:::phone
+        P3["Multi-Document Scanner View (Reorder, Rotate, Retake, Delete, Annexures)"]:::phone
+        P4["Real-Time Progress & Review Trigger (Case Snapshot Submission)"]:::phone
+        P5["Grounded Conversational Q&A (Mic / Speaker, Captions, Typed Turns)"]:::phone
+        P6["Referenced Report & Delivery View (Telegram, Google Drive, Gmail Triggers)"]:::phone
+    end
+
+    P3 -->|"Hop 1: HTTPS (ngrok tunnel or LAN)<br/>Port 5000 • Pairing Cookie (dhr_pair)"| G_NET
+
+    %% TIER 2: UNO Q HARDWARE GATEWAY
+    subgraph TIER_2 ["TIER 2: ARDUINO UNO Q GATEWAY (apps/uno-gateway)"]
+        G_NET["Gateway Router & Security Middleware (CSRF • Origin Check • Cookie Auth)"]:::gateway
+        G_PAIR["Pairing Service (Single-Use Codes DK-XXXXXX, QR URL)"]:::gateway
+        G_CAM["Hardware Overhead UVC Camera (/dev/video0 • 1080p Still • 640x480 Preview)"]:::gateway
+        G_RFID["Hardware RFID Reader Adapter (RC522 / Serial • Monotonic Tap Ledger)"]:::gateway
+        G_SPOOL["Bounded SQLite Spool Buffer (Max 20 Captures / 50MB Ceiling)"]:::gateway
+        G_MGR["Capture Manager (SHA-256 Pre-hashing • Retry Interrupted Uploads)"]:::gateway
+        G_TUNNEL["Tunnel Supervisor (ngrok ARM64 Daemon • LAN HTTPS Fallback)"]:::gateway
+    end
+
+    G_NET --- G_PAIR
+    G_CAM --> G_MGR
+    G_RFID --> G_MGR
+    G_MGR --> G_SPOOL
+    G_MGR -->|"Hop 2: HTTP/HTTPS REST (Port 4000)<br/>Header: X-Dharmaraksha-Device-Key"| L_API
+
+    %% TIER 3: CENTRAL LAPTOP HOST & BACKEND
+    subgraph TIER_3 ["TIER 3: LAPTOP HOST & CENTRAL BACKEND"]
+        subgraph L_UI ["Laptop Web Interface (apps/laptop-web)"]
+            L_3D["3D Tribunal Chamber (Three.js / R3F / Drei • 60 FPS)<br/>5 Round Tables • 50 Seats • Evidence Well • Podium"]:::laptop
+            L_FOLIO["Warm Paper Folio Workspace (Split View • Light Folio + Ink Chamber)"]:::laptop
+            L_2D["Accessible 2D Fallback View (Full Inspection Outside WebGL)"]:::laptop
+            L_EVAL["Evaluator Presentation View (Milestone Handoffs • Zero Raw Secrets)"]:::laptop
+        end
+
+        subgraph L_API_SRV ["Central Main API (apps/main-api)"]
+            L_API["Express REST Server (Port 4000)<br/>(Cases • Sessions • Documents • Snapshots)"]:::laptop
+            L_AUTH["requireCaseAccess Middleware (Session Binding • Multi-Tenant Isolation)"]:::laptop
+            L_OCR["Indian Script OCR Engine (Kannada, Devanagari, Latin • >1000 Chars • Tables)"]:::laptop
+            L_QA["QaTurnService (Scope Filter • Ambiguity Clarification • Comparison)"]:::laptop
+            L_LEDGER["EventLedgerService (Monotonic Event Stream • SSE / WebSockets)"]:::laptop
+        end
+
+        subgraph L_WRK ["Background Worker & Orchestration DAG (apps/worker)"]
+            W_SCHED["Durable Task Scheduler (Claims • Leases • 30s Timeout • Recovery)"]:::laptop
+            W_INDEX["Case-Restricted BM25 Lexical Index (Verbatim Passages • Exact Anchors)"]:::laptop
+            W_VAL["Post-Synthesis Grounding Validator (Strict vs Partial Publication Policy)"]:::laptop
+        end
+
+        subgraph L_DATA ["Authoritative Persistence & Storage"]
+            DB[("PostgreSQL 15+ Central DB (19 Relational Tables)")]:::database
+            STORE[("Private Document Store (./storage/documents/ AES-256 Encrypted)")]:::database
+            CORPUS[("Curated Indian Legal Corpus (Transfer of Property, Contract Act, Rent, SC)")]:::database
+        end
+    end
+
+    L_API <-->|"SSE Milestones & REST State"| L_UI
+    L_API --> L_AUTH
+    L_API --> L_OCR
+    L_API --> L_QA
+    L_API --> L_LEDGER
+    L_API --> DB
+    L_API --> STORE
+
+    W_SCHED --> DB
+    W_INDEX --> STORE
+    W_INDEX --> CORPUS
+
+    %% 50 SPECIALIST BENCHES & DAG FLOW
+    subgraph TRIBUNAL_CHAMBER ["⚖️ THE 50 SPECIALIST BENCHES (packages/tribunal-definitions)"]
+        subgraph STAGE_1 ["STAGE 1: DOCUMENT & EVIDENCE"]
+            direction TB
+            BA["BENCH A (A01–A09)<br/>Capture Quality, Continuity, Fidelity, Language, Parties, Dates/Amounts, Structure, Consistency, Sensitive Data"]:::benchA
+            A10["A10 Evidence Chair (Consolidated Evidence Packet)"]:::benchA
+            BA --> A10
+        end
+
+        subgraph STAGE_2 ["STAGE 2: OBLIGATIONS & STATUTORY SOURCES"]
+            direction TB
+            BB["BENCH B (B01–B09)<br/>Contract, Employment, Tenancy, Property, Consumer, MSME, Lending, IP, Exit/Dispute"]:::benchB
+            B10["B10 Obligations Chair (Obligations Packet)"]:::benchB
+            BB --> B10
+
+            BC["BENCH C (C01–C09)<br/>Jurisdiction, Statute, State-Law, Rules, Temporal, Precedents, Relevance, Contrary, Verifier"]:::benchC
+            C10["C10 Sources Chair (Verified Authorities Packet)"]:::benchC
+            BC --> C10
+        end
+
+        subgraph STAGE_3 ["STAGE 3: ADVERSARIAL RISK & DISSENT"]
+            direction TB
+            BD["BENCH D (D01–D09)<br/>Holder Advocate vs Counterparty Advocate, Ambiguity, Exposure, Deadlines, Fairness, Gaps, Red-Flags, Scenarios"]:::benchD
+            D10["D10 Risk Chair (Preserved Dissent & Risk Packet)"]:::benchD
+            BD --> D10
+        end
+
+        subgraph STAGE_4 ["STAGE 4: VERIFICATION & EXPLANATION"]
+            direction TB
+            BE["BENCH E (E01–E09)<br/>Evidence Auditor, Contradiction Resolver, Math/Timeline, Coverage, Plain-Language, Multilingual, Clarification, Triage, Privacy"]:::benchE
+            E10["E10 Verification Chair (Final Release Status Packet)"]:::benchE
+            BE --> E10
+        end
+
+        MESSENGER["📬 DETERMINISTIC MESSENGER (Packet Validator • SHA-256 Deduplication • Courier Transit Path)"]:::official
+        PRESIDING["🏛️ AI PRESIDING REVIEWER (Elevated Podium • Synthesis of 5 Packets • Dissent Preservation)"]:::official
+    end
+
+    W_SCHED --> STAGE_1
+    A10 -->|"Stage 1 Complete"| STAGE_2
+    B10 & C10 -->|"Stage 2 Complete"| STAGE_3
+    D10 -->|"Stage 3 Complete"| STAGE_4
+
+    A10 & B10 & C10 & D10 & E10 -->|"Versioned Packets"| MESSENGER
+    MESSENGER -->|"Idempotent Delivery (duplicate_ignored)"| PRESIDING
+    PRESIDING -->|"Consolidated Presiding Summary"| W_VAL
+    W_VAL -->|"Verified Report / Findings"| DB
+
+    %% EXTERNAL CLOUD INTEGRATIONS
+    subgraph CLOUD_INTEGRATIONS ["REMOTE CLOUD PROVIDERS & INTEGRATIONS"]
+        GEMINI["Google Gemini 1.5 / 2.0 API (Multi-Document Legal Reasoning & Synthesis)"]:::cloud
+        SARVAM["Sarvam AI Indian Speech Engine (Multilingual STT & TTS • Indian Accents)"]:::cloud
+        TG["Telegram Bot Service (Visitor Notifications & Report Dispatch)"]:::cloud
+        GDRIVE["Google Drive API (Authorized PDF Case Report Export)"]:::cloud
+        GMAIL["Gmail SMTP Dispatcher (App-Password Email Sender)"]:::cloud
+    end
+
+    W_SCHED <-->|"Inference Dispatch"| GEMINI
+    P5 <-->|"Audio STT / TTS"| SARVAM
+    L_API -->|"Report Export"| TG
+    L_API -->|"Report Export"| GDRIVE
+    L_API -->|"Report Export"| GMAIL
